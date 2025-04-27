@@ -1,3 +1,6 @@
 from django.contrib import admin
+from .models import Usuario, Admin, UsuarioTicket
 
-# Register your models here.
+admin.site.register(Usuario)
+admin.site.register(Admin)
+admin.site.register(UsuarioTicket)
