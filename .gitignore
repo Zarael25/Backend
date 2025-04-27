@@ -1,3 +1,4 @@
+#IGNORAR
 # Ignorar el entorno virtual
 .env/
 
