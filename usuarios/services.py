@@ -41,3 +41,4 @@ def login_usuario(username, password):
         'nombre': usuario.nombre,
         'suscripcion': usuario.suscripcion,
     }
+

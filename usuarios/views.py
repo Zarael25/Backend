@@ -5,9 +5,6 @@ from .serializers import UsuarioSerializer, AdminSerializer, UsuarioTicketSerial
 from . import services
 
 
-
-
-
 class UsuarioViewSet(viewsets.ModelViewSet):
     queryset = Usuario.objects.all()
     serializer_class = UsuarioSerializer
@@ -59,3 +56,6 @@ class LoginUsuarioViewSet(viewsets.ViewSet):
 
         except Exception as e:
             return Response({"error": str(e)}, status=status.HTTP_401_UNAUTHORIZED)
+        
+
+
