@@ -1,5 +1,7 @@
 from .models import Usuario
 
+
+
 def registrar_usuario(data):
     """
     Servicio para registrar un nuevo usuario.
@@ -7,7 +9,7 @@ def registrar_usuario(data):
     """
     usuario = Usuario.objects.create(
         username=data['username'],
-        password=data['password'],  # Recuerda encriptar en producción
+        password=data['password'],  
         nombre=data['nombre'],
         correo=data['correo']
     )
