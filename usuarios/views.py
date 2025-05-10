@@ -3,7 +3,7 @@ from rest_framework.response import Response
 from .models import Usuario, Admin, UsuarioTicket
 from .serializers import UsuarioSerializer, AdminSerializer, UsuarioTicketSerializer
 from . import services
-
+from rest_framework.decorators import action
 
 class UsuarioViewSet(viewsets.ModelViewSet):
     queryset = Usuario.objects.all()
@@ -57,5 +57,24 @@ class LoginUsuarioViewSet(viewsets.ViewSet):
         except Exception as e:
             return Response({"error": str(e)}, status=status.HTTP_401_UNAUTHORIZED)
         
+
+class LogoutUsuarioViewSet(viewsets.ViewSet):
+    """
+    ViewSet para cerrar sesión (logout) de usuario.
+    """
+    
+    @action(detail=False, methods=['post'], url_path='logout')
+    def logout(self, request):
+        refresh_token = request.data.get('refresh')
+        
+        if not refresh_token:
+            return Response({'error': 'Se requiere token de refresh'}, status=status.HTTP_400_BAD_REQUEST)
+        
+        try:
+            # Llamamos al servicio para cerrar sesión
+            resultado = services.logout_usuario(refresh_token)
+            return Response(resultado, status=status.HTTP_200_OK)
+        except Exception as e:
+            return Response({'error': str(e)}, status=status.HTTP_400_BAD_REQUEST)
 
 

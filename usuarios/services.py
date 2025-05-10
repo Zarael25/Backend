@@ -42,3 +42,13 @@ def login_usuario(username, password):
         'suscripcion': usuario.suscripcion,
     }
 
+def logout_usuario(refresh_token_str):
+    """
+    El backend no almacena tokens. El logout consiste en que el cliente elimine el token.
+    """
+    # Podés agregar lógica de validación si querés asegurarte que el token es válido
+    try:
+        token = RefreshToken(refresh_token_str)
+        return {"mensaje": "Logout exitoso. El cliente debe eliminar el token."}
+    except Exception:
+        raise AuthenticationFailed("Token inválido o expirado.")
