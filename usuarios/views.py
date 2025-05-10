@@ -4,6 +4,10 @@ from .models import Usuario, Admin, UsuarioTicket
 from .serializers import UsuarioSerializer, AdminSerializer, UsuarioTicketSerializer
 from . import services
 
+
+
+
+
 class UsuarioViewSet(viewsets.ModelViewSet):
     queryset = Usuario.objects.all()
     serializer_class = UsuarioSerializer
@@ -35,3 +39,23 @@ class RegistroUsuarioViewSet(viewsets.ViewSet):
             # En caso de error, se devuelve una respuesta con el mensaje del error
             return Response({"error": str(e)}, status=status.HTTP_400_BAD_REQUEST)
         
+
+
+# ViewSet para el inicio de sesión personalizado de usuarios
+class LoginUsuarioViewSet(viewsets.ViewSet):
+    """
+    ViewSet para iniciar sesión con username y contraseña.
+    """
+    def create(self, request):
+        try:
+            username = request.data.get("username")
+            password = request.data.get("password")
+
+            if not username or not password:
+                return Response({"error": "Username y contraseña son obligatorios."}, status=status.HTTP_400_BAD_REQUEST)
+
+            token_data = services.login_usuario(username, password)
+            return Response(token_data, status=status.HTTP_200_OK)
+
+        except Exception as e:
+            return Response({"error": str(e)}, status=status.HTTP_401_UNAUTHORIZED)

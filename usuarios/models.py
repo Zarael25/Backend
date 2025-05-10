@@ -24,6 +24,10 @@ class Usuario(models.Model):
 
     def __str__(self):
         return self.username
+    @property
+    def id(self):
+        return self.usuario_id
+
 
 
 
