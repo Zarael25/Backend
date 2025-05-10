@@ -3,6 +3,7 @@ from rest_framework.response import Response
 from .models import Usuario, Admin, UsuarioTicket
 from .serializers import UsuarioSerializer, AdminSerializer, UsuarioTicketSerializer
 from . import services
+from rest_framework.decorators import action
 
 class UsuarioViewSet(viewsets.ModelViewSet):
     queryset = Usuario.objects.all()
@@ -35,3 +36,45 @@ class RegistroUsuarioViewSet(viewsets.ViewSet):
             # En caso de error, se devuelve una respuesta con el mensaje del error
             return Response({"error": str(e)}, status=status.HTTP_400_BAD_REQUEST)
         
+
+
+# ViewSet para el inicio de sesión personalizado de usuarios
+class LoginUsuarioViewSet(viewsets.ViewSet):
+    """
+    ViewSet para iniciar sesión con username y contraseña.
+    """
+    def create(self, request):
+        try:
+            username = request.data.get("username")
+            password = request.data.get("password")
+
+            if not username or not password:
+                return Response({"error": "Username y contraseña son obligatorios."}, status=status.HTTP_400_BAD_REQUEST)
+
+            token_data = services.login_usuario(username, password)
+            return Response(token_data, status=status.HTTP_200_OK)
+
+        except Exception as e:
+            return Response({"error": str(e)}, status=status.HTTP_401_UNAUTHORIZED)
+        
+
+class LogoutUsuarioViewSet(viewsets.ViewSet):
+    """
+    ViewSet para cerrar sesión (logout) de usuario.
+    """
+    
+    @action(detail=False, methods=['post'], url_path='logout')
+    def logout(self, request):
+        refresh_token = request.data.get('refresh')
+        
+        if not refresh_token:
+            return Response({'error': 'Se requiere token de refresh'}, status=status.HTTP_400_BAD_REQUEST)
+        
+        try:
+            # Llamamos al servicio para cerrar sesión
+            resultado = services.logout_usuario(refresh_token)
+            return Response(resultado, status=status.HTTP_200_OK)
+        except Exception as e:
+            return Response({'error': str(e)}, status=status.HTTP_400_BAD_REQUEST)
+
+
