@@ -154,3 +154,6 @@ SIMPLE_JWT = {
     'BLACKLIST_AFTER_ROTATION': False,
     'UPDATE_LAST_LOGIN': True,
 }
+
+
+AUTH_USER_MODEL = 'usuarios.Usuario'

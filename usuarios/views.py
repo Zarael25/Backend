@@ -20,22 +20,16 @@ class UsuarioTicketViewSet(viewsets.ModelViewSet):
 
 # ViewSet para el registro personalizado de usuarios
 class RegistroUsuarioViewSet(viewsets.ViewSet):
-    """
-    ViewSet para registrar un nuevo usuario.
-    """
     def create(self, request):
         try:
-            # Llamamos al servicio para registrar el usuario
-            usuario = services.registrar_usuario(request.data)  # No se desempaqueta
-            
-            # Usamos el serializador para devolver los datos del nuevo usuario
-            serializer = UsuarioSerializer(usuario)
-            return Response(serializer.data, status=status.HTTP_201_CREATED)
-        
+            serializer = UsuarioSerializer(data=request.data)
+            if serializer.is_valid():
+                usuario = serializer.save()
+                return Response(UsuarioSerializer(usuario).data, status=status.HTTP_201_CREATED)
+            else:
+                return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
         except Exception as e:
-            # En caso de error, se devuelve una respuesta con el mensaje del error
-            return Response({"error": str(e)}, status=status.HTTP_400_BAD_REQUEST)
-        
+            return Response({"error": f"Error inesperado: {str(e)}"}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
 
 # ViewSet para el inicio de sesión personalizado de usuarios

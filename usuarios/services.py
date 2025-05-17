@@ -4,17 +4,14 @@ from rest_framework_simplejwt.tokens import RefreshToken
 
 
 def registrar_usuario(data):
-    """
-    Servicio para registrar un nuevo usuario.
-    El estado y la suscripción se asignan por defecto.
-    """
-    usuario = Usuario.objects.create(
+    usuario = Usuario(
         username=data['username'],
-        password=data['password'],  
         nombre=data['nombre'],
         correo=data['correo']
     )
-    return usuario  
+    usuario.set_password(data['password'])  # Encripta la contraseña
+    usuario.save()
+    return usuario
 
 
 
@@ -24,14 +21,12 @@ def login_usuario(username, password):
     except Usuario.DoesNotExist:
         raise AuthenticationFailed("Credenciales inválidas")
 
-    # Comparar contraseñas en texto plano
-    if password != usuario.password:
+    if not usuario.check_password(password):
         raise AuthenticationFailed("Credenciales inválidas")
 
     if usuario.estado != 'activo':
         raise AuthenticationFailed("El usuario está suspendido")
 
-    # Crear tokens JWT
     refresh = RefreshToken.for_user(usuario)
 
     return {
@@ -41,6 +36,8 @@ def login_usuario(username, password):
         'nombre': usuario.nombre,
         'suscripcion': usuario.suscripcion,
     }
+
+
 
 def logout_usuario(refresh_token_str):
     """
