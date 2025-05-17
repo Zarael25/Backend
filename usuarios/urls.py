@@ -1,6 +1,6 @@
 from django.urls import path, include
 from rest_framework.routers import DefaultRouter
-from .views import UsuarioViewSet, AdminViewSet, UsuarioTicketViewSet, RegistroUsuarioViewSet, LoginUsuarioViewSet, LogoutUsuarioViewSet
+from .views import UsuarioViewSet, AdminViewSet, UsuarioTicketViewSet, RegistroUsuarioViewSet, LoginUsuarioViewSet, LogoutUsuarioViewSet,PerfilUsuarioViewSet
 from rest_framework_simplejwt.views import TokenRefreshView
 
 router = DefaultRouter()
@@ -11,6 +11,8 @@ router.register(r'usuario_tickets', UsuarioTicketViewSet)
 
 router.register(r'registro', RegistroUsuarioViewSet, basename='registro')
 router.register(r'login', LoginUsuarioViewSet, basename='login-usuario')
+router.register(r'perfil', PerfilUsuarioViewSet, basename='perfil')
+
 
 logout_view = LogoutUsuarioViewSet.as_view({'post': 'logout'})
 

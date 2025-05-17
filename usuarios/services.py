@@ -49,3 +49,11 @@ def logout_usuario(refresh_token_str):
         return {"mensaje": "Logout exitoso. El cliente debe eliminar el token."}
     except Exception:
         raise AuthenticationFailed("Token inválido o expirado.")
+    
+
+def obtener_datos_usuario(usuario):
+    """
+    Devuelve los datos personales del usuario autenticado.
+    """
+    return usuario
+
