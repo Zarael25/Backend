@@ -72,3 +72,21 @@ class LogoutUsuarioViewSet(viewsets.ViewSet):
             return Response({'error': str(e)}, status=status.HTTP_400_BAD_REQUEST)
 
 
+
+from rest_framework import viewsets, status
+from rest_framework.response import Response
+from rest_framework.permissions import IsAuthenticated
+from .services import obtener_datos_usuario
+from .serializers import UsuarioSerializer
+
+class PerfilUsuarioViewSet(viewsets.ViewSet):
+    """
+    ViewSet para obtener los datos del usuario autenticado.
+    """
+    permission_classes = [IsAuthenticated]
+
+    def list(self, request):
+        usuario = obtener_datos_usuario(request.user)
+        serializer = UsuarioSerializer(usuario)
+        return Response(serializer.data, status=status.HTTP_200_OK)
+    
