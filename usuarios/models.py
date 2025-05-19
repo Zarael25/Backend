@@ -20,8 +20,15 @@ class UsuarioManager(BaseUserManager):
     def create_superuser(self, username, correo, password=None, **extra_fields):
         extra_fields.setdefault('is_superuser', True)
         extra_fields.setdefault('is_staff', True)
-        return self.create_user(username, correo, password, **extra_fields)
+        extra_fields.setdefault('estado', 'activo')
+        extra_fields.setdefault('tipo_usuario', 'admin')  # o como prefieras llamarlo
 
+        if extra_fields.get('is_staff') is not True:
+            raise ValueError('Superuser debe tener is_staff=True.')
+        if extra_fields.get('is_superuser') is not True:
+            raise ValueError('Superuser debe tener is_superuser=True.')
+
+        return self.create_user(username, correo, password, **extra_fields)
 
 
 
@@ -40,15 +47,22 @@ class Usuario(AbstractBaseUser, PermissionsMixin):
         ('pro', 'Pro'),
     ]
     
+    TIPO_USUARIO_CHOICES = [
+        ('usuario', 'Usuario'),
+        ('admin', 'Administrador'),
+    ]
+
     usuario_id = models.AutoField(primary_key=True)
     username = models.CharField(max_length=50, unique=True)
     correo = models.EmailField(max_length=100, unique=True)
     nombre = models.CharField(max_length=100)
     estado = models.CharField(max_length=20, choices=ESTADO_CHOICES, default='activo')
     suscripcion = models.CharField(max_length=10, choices=SUSCRIPCION_CHOICES, default='free')
+    tipo_usuario = models.CharField(max_length=20, choices=TIPO_USUARIO_CHOICES, default='usuario')
     
     is_active = models.BooleanField(default=True)
     is_staff = models.BooleanField(default=False)
+    is_superuser = models.BooleanField(default=False)
 
     groups = models.ManyToManyField(
         Group,
@@ -75,7 +89,7 @@ class Usuario(AbstractBaseUser, PermissionsMixin):
         return self.usuario_id
     
 
-
+""""
 # -------------------------------
 # MANAGER PERSONALIZADO ADMIN
 # -------------------------------
@@ -92,6 +106,15 @@ class AdminManager(BaseUserManager):
     def create_superuser(self, username, nombre, password=None, **extra_fields):
         extra_fields.setdefault('is_superuser', True)
         extra_fields.setdefault('is_staff', True)
+        extra_fields.setdefault('is_active', True)
+
+        if extra_fields.get('is_staff') is not True:
+            raise ValueError('Superuser debe tener is_staff=True.')
+        if extra_fields.get('is_superuser') is not True:
+            raise ValueError('Superuser debe tener is_superuser=True.')
+        if extra_fields.get('is_active') is not True:
+            raise ValueError('Superuser debe tener is_active=True.')
+
         return self.create_user(username, nombre, password, **extra_fields)
 
 
@@ -118,8 +141,8 @@ class Admin(AbstractBaseUser, PermissionsMixin):
     estado = models.CharField(max_length=20, choices=ESTADO_CHOICES, default='activo')
     
     is_active = models.BooleanField(default=True)
-    is_staff = models.BooleanField(default=False)
-
+    is_staff = models.BooleanField(default=True)
+    is_superuser = models.BooleanField(default=False)
 
 
     groups = models.ManyToManyField(
@@ -146,7 +169,7 @@ class Admin(AbstractBaseUser, PermissionsMixin):
     @property
     def id(self):
         return self.admin_id
-    
+"""
 
 
 
@@ -155,10 +178,12 @@ class Admin(AbstractBaseUser, PermissionsMixin):
 # -------------------------------
 class UsuarioTicket(models.Model):
     usuario = models.ForeignKey('usuarios.Usuario', on_delete=models.RESTRICT)
+    
     ticket = models.ForeignKey('negocios.Ticket', on_delete=models.RESTRICT)
 
     class Meta:
         unique_together = ['usuario', 'ticket']
+        
     
     def __str__(self):
         return f"Usuario {self.usuario.username} - Ticket {self.ticket.ticket_id}"

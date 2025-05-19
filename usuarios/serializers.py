@@ -1,5 +1,5 @@
 from rest_framework import serializers
-from .models import Usuario, Admin, UsuarioTicket
+from .models import Usuario, UsuarioTicket
 
 class UsuarioSerializer(serializers.ModelSerializer):
     password = serializers.CharField(write_only=True)  # Para que no se exponga al leer
@@ -24,7 +24,7 @@ class UsuarioSerializer(serializers.ModelSerializer):
         instance.save()
         return instance
 
-
+""""
 class AdminSerializer(serializers.ModelSerializer):
     password = serializers.CharField(write_only=True)
 
@@ -47,7 +47,7 @@ class AdminSerializer(serializers.ModelSerializer):
             instance.set_password(password)
         instance.save()
         return instance
-
+"""
 
 class UsuarioTicketSerializer(serializers.ModelSerializer):
     class Meta:
