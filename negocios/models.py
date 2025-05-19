@@ -7,6 +7,7 @@ class Negocio(models.Model):
         ('en_revision', 'En Revisión'),
         ('verificado', 'Verificado'),
         ('rechazado', 'Rechazado'),
+        ('oculto', 'Oculto'),
     ]
     
     CATEGORIA_CHOICES = [
