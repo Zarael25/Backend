@@ -27,6 +27,21 @@ class NegocioViewSet(viewsets.ModelViewSet):
         serializer = self.get_serializer(negocios, many=True)
         return Response(serializer.data)
     
+    
+    @action(detail=True, methods=['patch'], permission_classes=[IsAuthenticated], url_path='editar-parcial')
+    def editar_parcial(self, request, pk=None):
+        negocio = self.get_object()
+        if negocio.usuario != request.user and not request.user.is_staff:
+            return Response({"detail": "No tienes permiso para editar este negocio"}, status=status.HTTP_403_FORBIDDEN)
+
+        campos_permitidos = ['nombre', 'direccion', 'categoria', 'doc_respaldo', 'num_referencia', 'detalle']
+        datos = {key: value for key, value in request.data.items() if key in campos_permitidos}
+
+        serializer = self.get_serializer(negocio, data=datos, partial=True)
+        serializer.is_valid(raise_exception=True)
+        serializer.save()
+        return Response(serializer.data)
+    
 
 
 
