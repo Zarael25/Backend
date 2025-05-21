@@ -3,6 +3,7 @@ from rest_framework import viewsets
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.decorators import action
 from rest_framework.response import Response
+from rest_framework import status
 
 from .models import Negocio, Atencion, Ticket
 from .serializers import NegocioSerializer, AtencionSerializer, TicketSerializer
@@ -42,7 +43,15 @@ class NegocioViewSet(viewsets.ModelViewSet):
         serializer.save()
         return Response(serializer.data)
     
+    @action(detail=True, methods=['patch'], permission_classes=[IsAuthenticated], url_path='ocultar')
+    def ocultar_negocio(self, request, pk=None):
+        negocio = self.get_object()
+        if negocio.usuario != request.user and not request.user.is_staff:
+            return Response({"detail": "No tienes permiso para ocultar este negocio"}, status=status.HTTP_403_FORBIDDEN)
 
+        negocio.estado = 'oculto'
+        negocio.save()
+        return Response({"detail": f"Negocio '{negocio.nombre}' ocultado correctamente."}, status=status.HTTP_200_OK)
 
 
 
