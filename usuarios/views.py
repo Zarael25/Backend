@@ -4,6 +4,11 @@ from .models import Usuario, UsuarioTicket
 from .serializers import UsuarioSerializer, UsuarioTicketSerializer
 from . import services
 from rest_framework.decorators import action
+from rest_framework import viewsets, status
+from rest_framework.response import Response
+from rest_framework.permissions import IsAuthenticated
+from .services import obtener_datos_usuario
+from .serializers import UsuarioSerializer
 
 class UsuarioViewSet(viewsets.ModelViewSet):
     queryset = Usuario.objects.all()
@@ -73,11 +78,7 @@ class LogoutUsuarioViewSet(viewsets.ViewSet):
 
 
 
-from rest_framework import viewsets, status
-from rest_framework.response import Response
-from rest_framework.permissions import IsAuthenticated
-from .services import obtener_datos_usuario
-from .serializers import UsuarioSerializer
+
 
 class PerfilUsuarioViewSet(viewsets.ViewSet):
     """
