@@ -32,7 +32,7 @@ ALLOWED_HOSTS = ['localhost', '127.0.0.1', '10.0.2.2', '192.168.1.10']
 # Application definition
 
 INSTALLED_APPS = [
-    
+    'corsheaders',
     'rest_framework',
     'usuarios',
     'negocios',
@@ -45,6 +45,8 @@ INSTALLED_APPS = [
 ]
 
 MIDDLEWARE = [
+    'corsheaders.middleware.CorsMiddleware',
+    'django.middleware.common.CommonMiddleware',
     'django.middleware.security.SecurityMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
     'django.middleware.common.CommonMiddleware',
@@ -164,3 +166,4 @@ SIMPLE_JWT = {
 
 
 AUTH_USER_MODEL = 'usuarios.Usuario'
+CORS_ALLOW_ALL_ORIGINS = True
