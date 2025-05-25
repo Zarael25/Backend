@@ -1,6 +1,8 @@
-#IGNORAR
 # Ignorar el entorno virtual
-.env/
+.venv/
+
+# Ignorar el archivo .env real (en la raíz del proyecto)
+.env
 
 # Ignorar archivos compilados de Python
 __pycache__/
