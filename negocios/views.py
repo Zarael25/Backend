@@ -4,6 +4,7 @@ from rest_framework.permissions import IsAuthenticated
 from rest_framework.decorators import action
 from rest_framework.response import Response
 from rest_framework import status
+from rest_framework.exceptions import PermissionDenied
 
 from .models import Negocio, Atencion, Ticket
 from .serializers import NegocioSerializer, AtencionSerializer, TicketSerializer
@@ -19,8 +20,20 @@ class NegocioViewSet(viewsets.ModelViewSet):
             return Negocio.objects.all()
         return Negocio.objects.filter(usuario=self.request.user)
 
+
     def perform_create(self, serializer):
-        serializer.save(usuario=self.request.user)
+        usuario = self.request.user
+
+        # Si el usuario no es admin y tiene suscripción free, se limita a 1 negocio
+        if not usuario.is_staff and usuario.suscripcion == "free":
+            tiene_negocio = Negocio.objects.filter(usuario=usuario).exists()
+            if tiene_negocio:
+                raise PermissionDenied("Los usuarios con suscripción free solo pueden registrar un negocio.")
+
+        serializer.save(usuario=usuario)
+
+
+
 
     @action(detail=False, methods=['get'], permission_classes=[IsAuthenticated], url_path='mis_negocios')
     def mis_negocios(self, request):
