@@ -31,9 +31,7 @@ class NegocioViewSet(viewsets.ModelViewSet):
                 raise PermissionDenied("Los usuarios con suscripción free solo pueden registrar un negocio.")
 
         serializer.save(usuario=usuario)
-
-
-
+    
 
     @action(detail=False, methods=['get'], permission_classes=[IsAuthenticated], url_path='mis_negocios')
     def mis_negocios(self, request):
@@ -65,6 +63,19 @@ class NegocioViewSet(viewsets.ModelViewSet):
         negocio.estado = 'oculto'
         negocio.save()
         return Response({"detail": f"Negocio '{negocio.nombre}' ocultado correctamente."}, status=status.HTTP_200_OK)
+    
+
+    @action(detail=True, methods=['get'], permission_classes=[IsAuthenticated], url_path='mis_filas')
+    def mis_filas(self, request, pk=None):
+        negocio = self.get_object()
+
+        # Validar que el usuario sea el dueño del negocio o admin
+        if negocio.usuario != request.user and not request.user.is_staff:
+            return Response({"detail": "No tienes permiso para ver las filas de este negocio."}, status=status.HTTP_403_FORBIDDEN)
+
+        filas = Atencion.objects.filter(negocio=negocio)
+        serializer = AtencionSerializer(filas, many=True)
+        return Response(serializer.data)
 
 
 
