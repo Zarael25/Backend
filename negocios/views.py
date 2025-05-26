@@ -77,6 +77,13 @@ class NegocioViewSet(viewsets.ModelViewSet):
         serializer = AtencionSerializer(filas, many=True)
         return Response(serializer.data)
 
+    @action(detail=False, methods=['get'], permission_classes=[IsAuthenticated], url_path='verificados')
+    def negocios_verificados(self, request):
+        negocios_verificados = Negocio.objects.filter(estado='verificado')
+        serializer = self.get_serializer(negocios_verificados, many=True)
+        return Response(serializer.data)
+
+
 
 
 class AtencionViewSet(viewsets.ModelViewSet):
@@ -126,6 +133,9 @@ class AtencionViewSet(viewsets.ModelViewSet):
         serializer.is_valid(raise_exception=True)
         serializer.save()
         return Response(serializer.data)
+    
+
+
 
 
 
