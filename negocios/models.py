@@ -41,10 +41,11 @@ class Atencion(models.Model):
     nombre = models.CharField(max_length=100)
     cantidad_tickets = models.IntegerField()
     visible = models.BooleanField(default=True)
-    periodo_atencion = models.DurationField()
+    periodo_atencion = models.DurationField(null=True, blank=True)
     apertura = models.TimeField()
     finalizacion = models.TimeField()
     negocio = models.ForeignKey(Negocio, on_delete=models.RESTRICT)
+    numero_ticket_actual = models.IntegerField(default=0)
 
     def __str__(self):
         return self.nombre
@@ -66,6 +67,7 @@ class Ticket(models.Model):
     fecha_hora_registro = models.DateTimeField(auto_now_add=True)
     fecha_hora_atencion = models.DateTimeField(null=True, blank=True)
     atencion = models.ForeignKey(Atencion, on_delete=models.RESTRICT)
+    posicion = models.IntegerField(default=0)
 
     def __str__(self):
         return f"Ticket {self.ticket_id}"
