@@ -16,9 +16,16 @@ class NegocioViewSet(viewsets.ModelViewSet):
     permission_classes = [IsAuthenticated]  # Protege todas las operaciones del ViewSet
 
     def get_queryset(self):
-        if self.request.user.is_staff:
-            return Negocio.objects.all()
-        return Negocio.objects.filter(usuario=self.request.user)
+        # En la ruta base siempre devolvemos todos los negocios
+        return Negocio.objects.all()
+
+
+    @action(detail=False, methods=['get'], permission_classes=[IsAuthenticated], url_path='mis_negocios')
+    def mis_negocios(self, request):
+        # Aquí filtramos solo los negocios del usuario logueado
+        negocios = Negocio.objects.filter(usuario=request.user)
+        serializer = self.get_serializer(negocios, many=True)
+        return Response(serializer.data)
 
 
     def perform_create(self, serializer):
@@ -32,14 +39,7 @@ class NegocioViewSet(viewsets.ModelViewSet):
 
         serializer.save(usuario=usuario)
     
-
-    @action(detail=False, methods=['get'], permission_classes=[IsAuthenticated], url_path='mis_negocios')
-    def mis_negocios(self, request):
-        negocios = obtener_negocios_por_usuario(request.user)
-        serializer = self.get_serializer(negocios, many=True)
-        return Response(serializer.data)
-    
-    
+     
     @action(detail=True, methods=['patch'], permission_classes=[IsAuthenticated], url_path='editar-parcial')
     def editar_parcial(self, request, pk=None):
         negocio = self.get_object()
