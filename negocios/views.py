@@ -107,6 +107,29 @@ class AtencionViewSet(viewsets.ModelViewSet):
 
         serializer.save()
 
+    @action(detail=True, methods=['patch'], permission_classes=[IsAuthenticated], url_path='editar-parcial')
+    def editar_parcial(self, request, pk=None):
+        atencion = self.get_object()
+
+        # Solo puede editar el dueño del negocio o admin
+        if atencion.negocio.usuario != request.user and not request.user.is_staff:
+            return Response({"detail": "No tienes permiso para editar esta fila."}, status=status.HTTP_403_FORBIDDEN)
+
+        # Lista de campos que se pueden editar
+        campos_permitidos = [
+            'nombre', 'cantidad_tickets', 'visible', 'periodo_atencion',
+            'apertura', 'finalizacion', 'numero_ticket_actual'
+        ]
+        datos = {key: value for key, value in request.data.items() if key in campos_permitidos}
+
+        serializer = self.get_serializer(atencion, data=datos, partial=True)
+        serializer.is_valid(raise_exception=True)
+        serializer.save()
+        return Response(serializer.data)
+
+
+
+
 class TicketViewSet(viewsets.ModelViewSet):
     queryset = Ticket.objects.all()
     serializer_class = TicketSerializer
