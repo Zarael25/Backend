@@ -71,6 +71,30 @@ class NegocioViewSet(viewsets.ModelViewSet):
 class AtencionViewSet(viewsets.ModelViewSet):
     queryset = Atencion.objects.all()
     serializer_class = AtencionSerializer
+    permission_classes = [IsAuthenticated]
+
+    def get_queryset(self):
+        user = self.request.user
+        if user.is_staff:
+            return Atencion.objects.all()
+        return Atencion.objects.filter(negocio__usuario=user)
+
+    def perform_create(self, serializer):
+        user = self.request.user
+        negocio = serializer.validated_data['negocio']
+
+        # Validar propiedad del negocio
+        if not user.is_staff and negocio.usuario != user:
+            raise PermissionDenied("No tienes permiso para registrar filas en este negocio.")
+
+        # Limitar la cantidad de filas según suscripción
+        if not user.is_staff and user.suscripcion == "free":
+            # Verifica si ya tiene una fila creada en este negocio
+            existe_fila = Atencion.objects.filter(negocio=negocio).exists()
+            if existe_fila:
+                raise PermissionDenied("Los usuarios con suscripción free solo pueden registrar una fila por negocio.")
+
+        serializer.save()
 
 class TicketViewSet(viewsets.ModelViewSet):
     queryset = Ticket.objects.all()
