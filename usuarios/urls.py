@@ -1,3 +1,4 @@
+"""
 from django.urls import path, include
 from rest_framework.routers import DefaultRouter
 from .views import UsuarioViewSet, UsuarioTicketViewSet, RegistroUsuarioViewSet, LoginUsuarioViewSet, LogoutUsuarioViewSet,PerfilUsuarioViewSet
@@ -21,3 +22,4 @@ urlpatterns = [
     path('token/refresh/', TokenRefreshView.as_view(), name='token_refresh'),
     path('logout/', logout_view, name='logout-usuario'),
 ]
+"""
