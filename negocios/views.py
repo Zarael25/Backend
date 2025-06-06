@@ -6,8 +6,8 @@ from rest_framework.response import Response
 from rest_framework import status
 from rest_framework.exceptions import PermissionDenied
 
-from .models import Negocio, Atencion, Ticket
-from .serializers import NegocioSerializer, AtencionSerializer, TicketSerializer
+from .models import Negocio, FilaAtencion, Ticket
+from .serializers import NegocioSerializer, FilaAtencionSerializer, TicketSerializer
 from .services import obtener_negocios_por_usuario
 
 class NegocioViewSet(viewsets.ModelViewSet):
@@ -73,8 +73,8 @@ class NegocioViewSet(viewsets.ModelViewSet):
         if negocio.usuario != request.user and not request.user.is_staff:
             return Response({"detail": "No tienes permiso para ver las filas de este negocio."}, status=status.HTTP_403_FORBIDDEN)
 
-        filas = Atencion.objects.filter(negocio=negocio)
-        serializer = AtencionSerializer(filas, many=True)
+        filas = FilaAtencion.objects.filter(negocio=negocio)
+        serializer = FilaAtencionSerializer(filas, many=True)
         return Response(serializer.data)
 
     @action(detail=False, methods=['get'], permission_classes=[IsAuthenticated], url_path='verificados')
@@ -86,16 +86,16 @@ class NegocioViewSet(viewsets.ModelViewSet):
 
 
 
-class AtencionViewSet(viewsets.ModelViewSet):
-    queryset = Atencion.objects.all()
-    serializer_class = AtencionSerializer
+class FilaAtencionViewSet(viewsets.ModelViewSet):
+    queryset = FilaAtencion.objects.all()
+    serializer_class = FilaAtencionSerializer
     permission_classes = [IsAuthenticated]
 
     def get_queryset(self):
         user = self.request.user
         if user.is_staff:
-            return Atencion.objects.all()
-        return Atencion.objects.filter(negocio__usuario=user)
+            return FilaAtencion.objects.all()
+        return FilaAtencion.objects.filter(negocio__usuario=user)
 
     def perform_create(self, serializer):
         user = self.request.user
@@ -108,7 +108,7 @@ class AtencionViewSet(viewsets.ModelViewSet):
         # Limitar la cantidad de filas según suscripción
         if not user.is_staff and user.suscripcion == "free":
             # Verifica si ya tiene una fila creada en este negocio
-            existe_fila = Atencion.objects.filter(negocio=negocio).exists()
+            existe_fila = FilaAtencion.objects.filter(negocio=negocio).exists()
             if existe_fila:
                 raise PermissionDenied("Los usuarios con suscripción free solo pueden registrar una fila por negocio.")
 
@@ -116,10 +116,10 @@ class AtencionViewSet(viewsets.ModelViewSet):
 
     @action(detail=True, methods=['patch'], permission_classes=[IsAuthenticated], url_path='editar-parcial')
     def editar_parcial(self, request, pk=None):
-        atencion = self.get_object()
+        fila = self.get_object()
 
         # Solo puede editar el dueño del negocio o admin
-        if atencion.negocio.usuario != request.user and not request.user.is_staff:
+        if fila.negocio.usuario != request.user and not request.user.is_staff:
             return Response({"detail": "No tienes permiso para editar esta fila."}, status=status.HTTP_403_FORBIDDEN)
 
         # Lista de campos que se pueden editar
@@ -129,7 +129,7 @@ class AtencionViewSet(viewsets.ModelViewSet):
         ]
         datos = {key: value for key, value in request.data.items() if key in campos_permitidos}
 
-        serializer = self.get_serializer(atencion, data=datos, partial=True)
+        serializer = self.get_serializer(fila, data=datos, partial=True)
         serializer.is_valid(raise_exception=True)
         serializer.save()
         return Response(serializer.data)

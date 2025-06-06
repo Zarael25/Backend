@@ -36,8 +36,8 @@ class Negocio(models.Model):
 
 #TABLA ATENCION
 
-class Atencion(models.Model):
-    atencion_id = models.AutoField(primary_key=True)
+class FilaAtencion(models.Model):
+    fila_atencion_id = models.AutoField(primary_key=True)
     nombre = models.CharField(max_length=100)
     cantidad_tickets = models.IntegerField()
     visible = models.BooleanField(default=True)
@@ -66,7 +66,7 @@ class Ticket(models.Model):
     estado = models.CharField(max_length=20, choices=ESTADO_CHOICES)
     fecha_hora_registro = models.DateTimeField(auto_now_add=True)
     fecha_hora_atencion = models.DateTimeField(null=True, blank=True)
-    atencion = models.ForeignKey(Atencion, on_delete=models.RESTRICT)
+    atencion = models.ForeignKey(FilaAtencion, on_delete=models.RESTRICT)
     posicion = models.IntegerField(default=0)
 
     def __str__(self):

@@ -5,7 +5,7 @@ from usuarios.views import (
     UsuarioViewSet, UsuarioTicketViewSet, RegistroUsuarioViewSet,
     LoginUsuarioViewSet, LogoutUsuarioViewSet, PerfilUsuarioViewSet
 )
-from negocios.views import NegocioViewSet, AtencionViewSet, TicketViewSet
+from negocios.views import NegocioViewSet, FilaAtencionViewSet, TicketViewSet
 from rest_framework_simplejwt.views import TokenRefreshView
 
 router = DefaultRouter()
@@ -19,7 +19,7 @@ router.register(r'perfil', PerfilUsuarioViewSet, basename='perfil')
 
 # Negocios
 router.register(r'negocios', NegocioViewSet, basename='negocios')
-router.register(r'atenciones', AtencionViewSet)
+router.register(r'filas', FilaAtencionViewSet)
 router.register(r'tickets', TicketViewSet)
 
 # Logout personalizado
