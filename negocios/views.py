@@ -9,6 +9,9 @@ from rest_framework.exceptions import PermissionDenied
 from .models import Negocio, FilaAtencion, Ticket
 from .serializers import NegocioSerializer, FilaAtencionSerializer, TicketSerializer
 from .services import obtener_negocios_por_usuario
+from django.db.models import Q
+
+
 
 class NegocioViewSet(viewsets.ModelViewSet):
     queryset = Negocio.objects.all() 
@@ -79,7 +82,16 @@ class NegocioViewSet(viewsets.ModelViewSet):
 
     @action(detail=False, methods=['get'], permission_classes=[IsAuthenticated], url_path='verificados')
     def negocios_verificados(self, request):
+        termino = request.query_params.get('search', '').strip()
+
         negocios_verificados = Negocio.objects.filter(estado='verificado')
+
+        if termino:
+            negocios_verificados = negocios_verificados.filter(
+                Q(nombre__icontains=termino) |
+                Q(categoria__icontains=termino)
+            )
+
         serializer = self.get_serializer(negocios_verificados, many=True)
         return Response(serializer.data)
     
@@ -90,10 +102,7 @@ class NegocioViewSet(viewsets.ModelViewSet):
         filas_visibles = FilaAtencion.objects.filter(negocio=negocio, visible=True)
         serializer = FilaAtencionSerializer(filas_visibles, many=True)
         return Response(serializer.data, status=status.HTTP_200_OK)
-
-
-
-
+    
 
 
 class FilaAtencionViewSet(viewsets.ModelViewSet):
