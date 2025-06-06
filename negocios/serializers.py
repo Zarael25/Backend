@@ -1,5 +1,5 @@
 from rest_framework import serializers
-from .models import Negocio, Atencion, Ticket
+from .models import Negocio, FilaAtencion, Ticket
 
 class NegocioSerializer(serializers.ModelSerializer):
     class Meta:
@@ -7,9 +7,9 @@ class NegocioSerializer(serializers.ModelSerializer):
         fields = '__all__'
         read_only_fields = ['usuario']
 
-class AtencionSerializer(serializers.ModelSerializer):
+class FilaAtencionSerializer(serializers.ModelSerializer):
     class Meta:
-        model = Atencion
+        model = FilaAtencion
         fields = '__all__'
 
 class TicketSerializer(serializers.ModelSerializer):
