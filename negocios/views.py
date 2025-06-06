@@ -82,6 +82,16 @@ class NegocioViewSet(viewsets.ModelViewSet):
         negocios_verificados = Negocio.objects.filter(estado='verificado')
         serializer = self.get_serializer(negocios_verificados, many=True)
         return Response(serializer.data)
+    
+    @action(detail=True, methods=['get'], permission_classes=[IsAuthenticated], url_path='filas_visibles')
+    def filas_visibles(self, request, pk=None):
+        negocio = self.get_object()
+
+        filas_visibles = FilaAtencion.objects.filter(negocio=negocio, visible=True)
+        serializer = FilaAtencionSerializer(filas_visibles, many=True)
+        return Response(serializer.data, status=status.HTTP_200_OK)
+
+
 
 
 
