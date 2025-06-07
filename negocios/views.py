@@ -11,7 +11,10 @@ from .serializers import NegocioSerializer, FilaAtencionSerializer, TicketSerial
 from .services import obtener_negocios_por_usuario
 from django.db.models import Q
 
+from django.utils import timezone
+from datetime import datetime, timedelta
 
+from usuarios.models import UsuarioTicket
 
 class NegocioViewSet(viewsets.ModelViewSet):
     queryset = Negocio.objects.all() 
@@ -158,7 +161,64 @@ class FilaAtencionViewSet(viewsets.ModelViewSet):
 
 
 
-
 class TicketViewSet(viewsets.ModelViewSet):
     queryset = Ticket.objects.all()
     serializer_class = TicketSerializer
+
+    @action(detail=False, methods=['post'], url_path='generar', permission_classes=[IsAuthenticated])
+    def generar_ticket(self, request):
+        usuario = request.user
+
+        # 🚫 Verificar si el usuario está suspendido
+        if usuario.estado != 'activo':
+            return Response({'error': 'Tu cuenta está suspendida. No puedes generar tickets.'}, status=status.HTTP_403_FORBIDDEN)
+
+        fila_id = request.data.get('fila_atencion')
+        if not fila_id:
+            return Response({'error': 'El campo fila_atencion es obligatorio.'}, status=status.HTTP_400_BAD_REQUEST)
+
+        try:
+            fila = FilaAtencion.objects.get(fila_atencion_id=fila_id)
+        except FilaAtencion.DoesNotExist:
+            return Response({'error': 'Fila de atención no encontrada.'}, status=status.HTTP_404_NOT_FOUND)
+
+        # 🚫 Verificar si ya tiene un ticket activo en esta fila
+        tickets_usuario = UsuarioTicket.objects.filter(
+            usuario=usuario,
+            ticket__fila_atencion=fila,
+            ticket__estado='activo'
+        )
+        
+        if tickets_usuario.exists():
+            return Response({'error': 'Ya tienes un ticket activo en esta fila.'}, status=status.HTTP_400_BAD_REQUEST)
+
+        # 👇 Continuar con la lógica actual si no tiene ticket aún
+        nueva_posicion = fila.numero_ticket_actual + 1
+        if nueva_posicion > fila.cantidad_tickets:
+            return Response({'error': 'Se ha alcanzado el límite de tickets para esta fila.'}, status=status.HTTP_400_BAD_REQUEST)
+
+        fecha_hora_atencion = None
+        if fila.periodo_atencion and fila.periodo_atencion.total_seconds() > 0:
+            hoy = timezone.localtime().date()
+            hora_base = datetime.combine(hoy, fila.apertura)
+            fecha_hora_atencion = hora_base + (fila.periodo_atencion * (nueva_posicion - 1))
+
+            hora_final = datetime.combine(hoy, fila.finalizacion)
+            if fecha_hora_atencion.time() > fila.finalizacion:
+                return Response({'error': 'No se puede asignar un ticket porque excede el horario de atención.'}, status=status.HTTP_400_BAD_REQUEST)
+
+        ticket = Ticket.objects.create(
+            estado='activo',
+            fila_atencion=fila,
+            posicion=nueva_posicion,
+            fecha_hora_atencion=fecha_hora_atencion
+        )
+
+        fila.numero_ticket_actual = nueva_posicion
+        fila.save()
+
+        # Asociar el ticket al usuario
+        UsuarioTicket.objects.create(usuario=usuario, ticket=ticket)
+
+        serializer = self.get_serializer(ticket)
+        return Response(serializer.data, status=status.HTTP_201_CREATED)
