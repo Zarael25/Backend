@@ -24,32 +24,35 @@ class UsuarioSerializer(serializers.ModelSerializer):
         instance.save()
         return instance
 
-""""
-class AdminSerializer(serializers.ModelSerializer):
-    password = serializers.CharField(write_only=True)
-
-    class Meta:
-        model = Admin
-        fields = '__all__'
-
-    def create(self, validated_data):
-        password = validated_data.pop('password')
-        admin = Admin(**validated_data)
-        admin.set_password(password)
-        admin.save()
-        return admin
-
-    def update(self, instance, validated_data):
-        password = validated_data.pop('password', None)
-        for attr, value in validated_data.items():
-            setattr(instance, attr, value)
-        if password:
-            instance.set_password(password)
-        instance.save()
-        return instance
-"""
 
 class UsuarioTicketSerializer(serializers.ModelSerializer):
     class Meta:
         model = UsuarioTicket
         fields = '__all__'
+
+
+
+class UsuarioTicketDetalleSerializer(serializers.ModelSerializer):
+    # Datos del usuario
+    nombre = serializers.CharField(source='usuario.nombre', read_only=True)
+    correo = serializers.EmailField(source='usuario.correo', read_only=True)
+
+    # Datos del ticket
+    estado = serializers.CharField(source='ticket.estado', read_only=True)
+    fecha_hora_registro = serializers.DateTimeField(source='ticket.fecha_hora_registro', read_only=True)
+    fecha_hora_atencion = serializers.DateTimeField(source='ticket.fecha_hora_atencion', read_only=True)
+    posicion = serializers.IntegerField(source='ticket.posicion', read_only=True)
+
+    # Datos de la fila
+    fila_nombre = serializers.CharField(source='ticket.fila_atencion.nombre', read_only=True)
+
+    # Datos del negocio
+    negocio_nombre = serializers.CharField(source='ticket.fila_atencion.negocio.nombre', read_only=True)
+
+    class Meta:
+        model = UsuarioTicket
+        fields = [
+            'nombre', 'correo',
+            'estado', 'fecha_hora_registro', 'fecha_hora_atencion', 'posicion',
+            'fila_nombre', 'negocio_nombre',
+        ]

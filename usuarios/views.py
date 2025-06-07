@@ -1,23 +1,19 @@
 from rest_framework import viewsets, status
 from rest_framework.response import Response
 from .models import Usuario, UsuarioTicket
-from .serializers import UsuarioSerializer, UsuarioTicketSerializer
+from .serializers import UsuarioSerializer, UsuarioTicketSerializer, UsuarioTicketDetalleSerializer
 from . import services
 from rest_framework.decorators import action
 from rest_framework import viewsets, status
 from rest_framework.response import Response
 from rest_framework.permissions import IsAuthenticated
 from .services import obtener_datos_usuario
-from .serializers import UsuarioSerializer
+
 
 class UsuarioViewSet(viewsets.ModelViewSet):
     queryset = Usuario.objects.all()
     serializer_class = UsuarioSerializer
-""""
-class AdminViewSet(viewsets.ModelViewSet):
-    queryset = Admin.objects.all()
-    serializer_class = AdminSerializer
-"""
+
 class UsuarioTicketViewSet(viewsets.ModelViewSet):
     queryset = UsuarioTicket.objects.all()
     serializer_class = UsuarioTicketSerializer
@@ -91,3 +87,36 @@ class PerfilUsuarioViewSet(viewsets.ViewSet):
         serializer = UsuarioSerializer(usuario)
         return Response(serializer.data, status=status.HTTP_200_OK)
     
+
+class UsuarioTicketViewSet(viewsets.ReadOnlyModelViewSet):
+    queryset = UsuarioTicket.objects.all()
+    permission_classes = [IsAuthenticated]
+
+    @action(detail=False, methods=['get'], url_path='mis-tickets')
+    def mis_tickets(self, request):
+        usuario = request.user
+        tickets = UsuarioTicket.objects.filter(usuario=usuario)
+        serializer = UsuarioTicketDetalleSerializer(tickets, many=True)
+        return Response(serializer.data)
+
+    @action(detail=True, methods=['get'], url_path='detalle')
+    def detalle_ticket(self, request, pk=None):
+        usuario = request.user
+        try:
+            usuario_ticket = UsuarioTicket.objects.get(pk=pk, usuario=usuario)
+        except UsuarioTicket.DoesNotExist:
+            return Response({'error': 'Ticket no encontrado o no pertenece al usuario.'}, status=status.HTTP_404_NOT_FOUND)
+
+        serializer = UsuarioTicketDetalleSerializer(usuario_ticket)
+        return Response(serializer.data)
+    
+    @action(detail=False, methods=['get'], url_path=r'detalle-por-ticket/(?P<ticket_id>\d+)')
+    def detalle_por_ticket(self, request, ticket_id=None):
+        usuario = request.user
+        try:
+            usuario_ticket = UsuarioTicket.objects.get(ticket__ticket_id=ticket_id, usuario=usuario)
+        except UsuarioTicket.DoesNotExist:
+            return Response({'error': 'Ticket no encontrado o no pertenece al usuario.'}, status=status.HTTP_404_NOT_FOUND)
+
+        serializer = UsuarioTicketDetalleSerializer(usuario_ticket)
+        return Response(serializer.data)
