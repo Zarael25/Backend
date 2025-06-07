@@ -169,7 +169,7 @@ class TicketViewSet(viewsets.ModelViewSet):
     def generar_ticket(self, request):
         usuario = request.user
 
-        # 🚫 Verificar si el usuario está suspendido
+        #  Verificar si el usuario está suspendido
         if usuario.estado != 'activo':
             return Response({'error': 'Tu cuenta está suspendida. No puedes generar tickets.'}, status=status.HTTP_403_FORBIDDEN)
 
@@ -182,7 +182,7 @@ class TicketViewSet(viewsets.ModelViewSet):
         except FilaAtencion.DoesNotExist:
             return Response({'error': 'Fila de atención no encontrada.'}, status=status.HTTP_404_NOT_FOUND)
 
-        # 🚫 Verificar si ya tiene un ticket activo en esta fila
+        #  Verificar si ya tiene un ticket activo en esta fila
         tickets_usuario = UsuarioTicket.objects.filter(
             usuario=usuario,
             ticket__fila_atencion=fila,
@@ -192,7 +192,7 @@ class TicketViewSet(viewsets.ModelViewSet):
         if tickets_usuario.exists():
             return Response({'error': 'Ya tienes un ticket activo en esta fila.'}, status=status.HTTP_400_BAD_REQUEST)
 
-        # 👇 Continuar con la lógica actual si no tiene ticket aún
+        #  Continuar con la lógica actual si no tiene ticket aún
         nueva_posicion = fila.numero_ticket_actual + 1
         if nueva_posicion > fila.cantidad_tickets:
             return Response({'error': 'Se ha alcanzado el límite de tickets para esta fila.'}, status=status.HTTP_400_BAD_REQUEST)
