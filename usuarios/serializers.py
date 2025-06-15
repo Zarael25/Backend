@@ -1,5 +1,5 @@
 from rest_framework import serializers
-from .models import Usuario, UsuarioTicket
+from .models import Usuario, UsuarioTicket, LogUsuario
 
 class UsuarioSerializer(serializers.ModelSerializer):
     password = serializers.CharField(write_only=True)  # Para que no se exponga al leer
@@ -60,3 +60,9 @@ class UsuarioTicketDetalleSerializer(serializers.ModelSerializer):
             'estado', 'fecha_hora_registro', 'fecha_hora_atencion', 'posicion',
             'fila_nombre', 'negocio_nombre',
         ]
+
+
+class LogUsuarioSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = LogUsuario
+        fields = '__all__'

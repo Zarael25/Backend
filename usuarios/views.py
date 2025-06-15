@@ -49,7 +49,7 @@ class LoginUsuarioViewSet(viewsets.ViewSet):
                 return Response({"error": "Username y contraseña son obligatorios."}, status=status.HTTP_400_BAD_REQUEST)
 
             # Ahora solo llamamos al servicio (que maneja errores correctamente)
-            token_data = services.login_usuario(username, password)
+            token_data = services.login_usuario(request, username, password)
             return Response(token_data, status=status.HTTP_200_OK)
 
         except AuthenticationFailed as e:

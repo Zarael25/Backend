@@ -1,7 +1,7 @@
 from .models import Usuario
 from rest_framework.exceptions import AuthenticationFailed
 from rest_framework_simplejwt.tokens import RefreshToken
-
+from usuarios.models import LogUsuario
 
 def registrar_usuario(data):
     usuario = Usuario(
@@ -15,7 +15,7 @@ def registrar_usuario(data):
 
 
 
-def login_usuario(username, password):
+def login_usuario(request, username, password):
     try:
         usuario = Usuario.objects.get(username=username)
     except Usuario.DoesNotExist:
@@ -26,6 +26,10 @@ def login_usuario(username, password):
 
     if usuario.esta_suspendido:
         raise AuthenticationFailed("El usuario está suspendido, comunicarse con admin@filas.com")
+
+    # Simula que el request tiene al usuario autenticado para el log
+    request.user = usuario
+    registrar_log_usuario(request, "inicio de sesión")
 
     refresh = RefreshToken.for_user(usuario)
 
@@ -57,3 +61,15 @@ def obtener_datos_usuario(usuario):
     """
     return usuario
 
+
+
+def registrar_log_usuario(request, tipo_accion):
+    user_agent = request.META.get("HTTP_USER_AGENT", "").lower()
+    origen = "móvil" if "android" in user_agent or "mobile" in user_agent else "web"
+
+    LogUsuario.objects.create(
+        usuario=request.user if request.user.is_authenticated else None,
+        tipo_accion=tipo_accion,
+        ruta_acceso=request.path,
+        origen_conexion=origen
+    )

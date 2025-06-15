@@ -2,6 +2,7 @@ from django.db import models
 from django.contrib.auth.models import AbstractBaseUser, PermissionsMixin, BaseUserManager, Group, Permission
 from django.utils import timezone
 from datetime import timedelta
+from django.conf import settings
 
 # -------------------------------
 # MANAGER PERSONALIZADO USUARIO
@@ -128,3 +129,20 @@ class UsuarioTicket(models.Model):
     
     def __str__(self):
         return f"Usuario {self.usuario.username} - Ticket {self.ticket.ticket_id}"
+
+
+
+
+# -------------------------------
+# MODELO LOG USUARIO
+# -------------------------------
+
+class LogUsuario(models.Model):
+    
+    fecha_hora = models.DateTimeField(auto_now_add=True)
+    tipo_accion = models.CharField(max_length=100)  # ej: "inicio de sesión"
+    ruta_acceso = models.CharField(max_length=255)
+    origen_conexion = models.CharField(max_length=50)  # "web" o "móvil"
+    usuario = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.SET_NULL, null=True, blank=True)
+    def __str__(self):
+        return f"{self.usuario} - {self.tipo_accion} - {self.fecha_hora}"
