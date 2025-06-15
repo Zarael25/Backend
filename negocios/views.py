@@ -170,8 +170,8 @@ class TicketViewSet(viewsets.ModelViewSet):
         usuario = request.user
 
         #  Verificar si el usuario está suspendido
-        if usuario.estado != 'activo':
-            return Response({'error': 'Tu cuenta está suspendida. No puedes generar tickets.'}, status=status.HTTP_403_FORBIDDEN)
+        if usuario.esta_suspendido:
+            return Response({'error': 'Tu cuenta está suspendida. Intenta más tarde.'}, status=status.HTTP_403_FORBIDDEN)
 
         fila_id = request.data.get('fila_atencion')
         if not fila_id:

@@ -8,6 +8,8 @@ from rest_framework import viewsets, status
 from rest_framework.response import Response
 from rest_framework.permissions import IsAuthenticated
 from .services import obtener_datos_usuario
+from django.utils import timezone
+from datetime import timedelta
 
 
 class UsuarioViewSet(viewsets.ModelViewSet):
@@ -47,6 +49,10 @@ class LoginUsuarioViewSet(viewsets.ViewSet):
                 return Response({"error": "Username y contraseña son obligatorios."}, status=status.HTTP_400_BAD_REQUEST)
 
             token_data = services.login_usuario(username, password)
+            
+            usuario = Usuario.objects.get(username=username)
+            usuario.esta_suspendido
+
             return Response(token_data, status=status.HTTP_200_OK)
 
         except Exception as e:
@@ -120,3 +126,45 @@ class UsuarioTicketViewSet(viewsets.ReadOnlyModelViewSet):
 
         serializer = UsuarioTicketDetalleSerializer(usuario_ticket)
         return Response(serializer.data)
+    
+
+    @action(detail=True, methods=['post'], url_path='cancelar')
+    def cancelar_ticket(self, request, pk=None):
+        usuario = request.user
+
+        try:
+            usuario_ticket = UsuarioTicket.objects.get(ticket__ticket_id=pk, usuario=usuario)
+        except UsuarioTicket.DoesNotExist:
+            return Response({'error': 'Ticket no encontrado o no pertenece al usuario.'}, status=status.HTTP_404_NOT_FOUND)
+
+        tiempo_actual = timezone.now()
+        tiempo_generacion = usuario_ticket.ticket.fecha_hora_registro
+        diferencia = tiempo_actual - tiempo_generacion
+
+        if diferencia > timedelta(hours=1):
+            return Response({'error': 'El ticket solo puede cancelarse dentro de una hora después de su generación.'}, status=status.HTTP_400_BAD_REQUEST)
+
+        # Cambiar estado del ticket a "cancelado"
+        ticket = usuario_ticket.ticket
+        ticket.estado = 'cancelado'
+        ticket.save(update_fields=['estado'])
+
+        # Aplicar suspensión temporal o permanente
+        usuario.suspendido_contador += 1
+
+        if usuario.suspendido_contador >= 5:
+            usuario.estado = 'suspendido'
+            usuario.suspendido_hasta = None  # Suspensión permanente
+        else:
+            minutos_castigo = usuario.suspendido_contador  # 1, 2, ..., 4
+            usuario.estado = 'suspendido'
+            usuario.suspendido_hasta = tiempo_actual + timedelta(minutes=minutos_castigo)
+
+        usuario.save(update_fields=['estado', 'suspendido_contador', 'suspendido_hasta'])
+
+        return Response({
+            'mensaje': 'Ticket cancelado correctamente.',
+            'castigo': f"{'Permanente' if usuario.suspendido_contador >= 5 else f'{minutos_castigo} minutos de suspensión'}"
+        }, status=status.HTTP_200_OK)
+
+    

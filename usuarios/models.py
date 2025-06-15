@@ -1,5 +1,7 @@
 from django.db import models
 from django.contrib.auth.models import AbstractBaseUser, PermissionsMixin, BaseUserManager, Group, Permission
+from django.utils import timezone
+from datetime import timedelta
 
 # -------------------------------
 # MANAGER PERSONALIZADO USUARIO
@@ -59,7 +61,11 @@ class Usuario(AbstractBaseUser, PermissionsMixin):
     estado = models.CharField(max_length=20, choices=ESTADO_CHOICES, default='activo')
     suscripcion = models.CharField(max_length=10, choices=SUSCRIPCION_CHOICES, default='free')
     tipo_usuario = models.CharField(max_length=20, choices=TIPO_USUARIO_CHOICES, default='usuario')
-    
+    suspendido_contador = models.PositiveIntegerField(default=0)
+    suspendido_hasta = models.DateTimeField(null=True, blank=True)
+
+
+
     is_active = models.BooleanField(default=True)
     is_staff = models.BooleanField(default=False)
     is_superuser = models.BooleanField(default=False)
@@ -87,6 +93,22 @@ class Usuario(AbstractBaseUser, PermissionsMixin):
     @property
     def id(self):
         return self.usuario_id
+    
+    @property
+    def esta_suspendido(self):
+        """
+        Verifica si el usuario está actualmente suspendido por cancelación de tickets.
+        Si ya pasó el tiempo de suspensión, se reactiva automáticamente.
+        """
+        if self.estado == 'suspendido':
+            if self.suspendido_hasta and timezone.now() < self.suspendido_hasta:
+                return True
+            elif self.suspendido_hasta and timezone.now() >= self.suspendido_hasta:
+                # Se reactiva automáticamente si ya pasó el tiempo de castigo
+                self.estado = 'activo'
+                self.save(update_fields=['estado', 'suspendido_hasta'])
+                return False
+        return False
     
 
 
