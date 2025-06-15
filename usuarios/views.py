@@ -48,11 +48,13 @@ class LoginUsuarioViewSet(viewsets.ViewSet):
             if not username or not password:
                 return Response({"error": "Username y contraseña son obligatorios."}, status=status.HTTP_400_BAD_REQUEST)
 
-            token_data = services.login_usuario(username, password)
+            
             
             usuario = Usuario.objects.get(username=username)
-            usuario.esta_suspendido
-
+            if usuario.esta_suspendido:
+                return Response({"error": "El usuario está suspendido"}, status=status.HTTP_403_FORBIDDEN)
+            
+            token_data = services.login_usuario(username, password)
             return Response(token_data, status=status.HTTP_200_OK)
 
         except Exception as e:
