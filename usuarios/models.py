@@ -106,6 +106,7 @@ class Usuario(AbstractBaseUser, PermissionsMixin):
             elif self.suspendido_hasta and timezone.now() >= self.suspendido_hasta:
                 # Se reactiva automáticamente si ya pasó el tiempo de castigo
                 self.estado = 'activo'
+                self.suspendido_hasta = None
                 self.save(update_fields=['estado', 'suspendido_hasta'])
                 return False
         return False
