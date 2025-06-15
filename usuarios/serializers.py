@@ -33,6 +33,9 @@ class UsuarioTicketSerializer(serializers.ModelSerializer):
 
 
 class UsuarioTicketDetalleSerializer(serializers.ModelSerializer):
+    # ID del ticket
+    ticket_id = serializers.IntegerField(source='ticket.ticket_id', read_only=True)
+
     # Datos del usuario
     nombre = serializers.CharField(source='usuario.nombre', read_only=True)
     correo = serializers.EmailField(source='usuario.correo', read_only=True)
@@ -52,6 +55,7 @@ class UsuarioTicketDetalleSerializer(serializers.ModelSerializer):
     class Meta:
         model = UsuarioTicket
         fields = [
+            'ticket_id', 
             'nombre', 'correo',
             'estado', 'fecha_hora_registro', 'fecha_hora_atencion', 'posicion',
             'fila_nombre', 'negocio_nombre',

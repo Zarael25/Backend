@@ -10,7 +10,7 @@ from rest_framework.permissions import IsAuthenticated
 from .services import obtener_datos_usuario
 from django.utils import timezone
 from datetime import timedelta
-
+from rest_framework.exceptions import AuthenticationFailed
 
 class UsuarioViewSet(viewsets.ModelViewSet):
     queryset = Usuario.objects.all()
@@ -48,17 +48,15 @@ class LoginUsuarioViewSet(viewsets.ViewSet):
             if not username or not password:
                 return Response({"error": "Username y contraseña son obligatorios."}, status=status.HTTP_400_BAD_REQUEST)
 
-            
-            
-            usuario = Usuario.objects.get(username=username)
-            if usuario.esta_suspendido:
-                return Response({"error": "El usuario está suspendido"}, status=status.HTTP_403_FORBIDDEN)
-            
+            # Ahora solo llamamos al servicio (que maneja errores correctamente)
             token_data = services.login_usuario(username, password)
             return Response(token_data, status=status.HTTP_200_OK)
 
-        except Exception as e:
+        except AuthenticationFailed as e:
             return Response({"error": str(e)}, status=status.HTTP_401_UNAUTHORIZED)
+
+        except Exception as e:
+            return Response({"error": "Error interno del servidor"}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
         
 
 class LogoutUsuarioViewSet(viewsets.ViewSet):
@@ -138,6 +136,13 @@ class UsuarioTicketViewSet(viewsets.ReadOnlyModelViewSet):
             usuario_ticket = UsuarioTicket.objects.get(ticket__ticket_id=pk, usuario=usuario)
         except UsuarioTicket.DoesNotExist:
             return Response({'error': 'Ticket no encontrado o no pertenece al usuario.'}, status=status.HTTP_404_NOT_FOUND)
+
+        ticket = usuario_ticket.ticket
+
+        # Verificar que el ticket esté en estado "activo"
+        if ticket.estado != 'activo':
+            return Response({'error': 'Solo se pueden cancelar tickets con estado activo.'}, status=status.HTTP_400_BAD_REQUEST)
+
 
         tiempo_actual = timezone.now()
         tiempo_generacion = usuario_ticket.ticket.fecha_hora_registro

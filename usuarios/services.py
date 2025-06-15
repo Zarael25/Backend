@@ -25,7 +25,7 @@ def login_usuario(username, password):
         raise AuthenticationFailed("Credenciales inválidas")
 
     if usuario.estado != 'activo':
-        raise AuthenticationFailed("El usuario está suspendido")
+        raise AuthenticationFailed("El usuario está suspendido, comunicarse con admin@filas.com")
 
     refresh = RefreshToken.for_user(usuario)
 
