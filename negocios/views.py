@@ -147,7 +147,7 @@ class FilaAtencionViewSet(viewsets.ModelViewSet):
         # Lista de campos que se pueden editar
         campos_permitidos = [
             'nombre', 'cantidad_tickets', 'visible', 'periodo_atencion',
-            'apertura', 'finalizacion', 'numero_ticket_actual'
+            'apertura', 'finalizacion', 'numero_ticket_actual','permitir_cancelacion'
         ]
         datos = {key: value for key, value in request.data.items() if key in campos_permitidos}
 

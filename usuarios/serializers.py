@@ -51,6 +51,7 @@ class UsuarioTicketDetalleSerializer(serializers.ModelSerializer):
 
     # Datos del negocio
     negocio_nombre = serializers.CharField(source='ticket.fila_atencion.negocio.nombre', read_only=True)
+    permitir_cancelacion = serializers.BooleanField(source='ticket.fila_atencion.permitir_cancelacion', read_only=True)
 
     class Meta:
         model = UsuarioTicket
@@ -58,7 +59,7 @@ class UsuarioTicketDetalleSerializer(serializers.ModelSerializer):
             'ticket_id', 
             'nombre', 'correo',
             'estado', 'fecha_hora_registro', 'fecha_hora_atencion', 'posicion',
-            'fila_nombre', 'negocio_nombre',
+            'fila_nombre', 'negocio_nombre', 'permitir_cancelacion',
         ]
 
 

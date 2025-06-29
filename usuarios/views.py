@@ -144,34 +144,41 @@ class UsuarioTicketViewSet(viewsets.ReadOnlyModelViewSet):
             return Response({'error': 'Solo se pueden cancelar tickets con estado activo.'}, status=status.HTTP_400_BAD_REQUEST)
 
 
-        tiempo_actual = timezone.now()
-        tiempo_generacion = usuario_ticket.ticket.fecha_hora_registro
-        diferencia = tiempo_actual - tiempo_generacion
 
-        if diferencia > timedelta(hours=1):
-            return Response({'error': 'El ticket solo puede cancelarse dentro de una hora después de su generación.'}, status=status.HTTP_400_BAD_REQUEST)
+        if not ticket.fila_atencion.permitir_cancelacion:
+            # Aplicar política de castigo (solo si la fila lo prohíbe)
+            tiempo_actual = timezone.now()
+            tiempo_generacion = usuario_ticket.ticket.fecha_hora_registro
+            diferencia = tiempo_actual - tiempo_generacion
 
-        # Cambiar estado del ticket a "cancelado"
-        ticket = usuario_ticket.ticket
-        ticket.estado = 'cancelado'
-        ticket.save(update_fields=['estado'])
+            if diferencia > timedelta(hours=1):
+                return Response({'error': 'El ticket solo puede cancelarse dentro de una hora después de su generación.'}, status=status.HTTP_400_BAD_REQUEST)
 
-        # Aplicar suspensión temporal o permanente
-        usuario.suspendido_contador += 1
+            # Penalización
+            usuario.suspendido_contador += 1
 
-        if usuario.suspendido_contador >= 5:
-            usuario.estado = 'suspendido'
-            usuario.suspendido_hasta = None  # Suspensión permanente
+            if usuario.suspendido_contador >= 5:
+                usuario.estado = 'suspendido'
+                usuario.suspendido_hasta = None  # Suspensión permanente
+            else:
+                minutos_castigo = usuario.suspendido_contador
+                usuario.estado = 'suspendido'
+                usuario.suspendido_hasta = timezone.now() + timedelta(minutes=minutos_castigo)
+
+            usuario.save(update_fields=['estado', 'suspendido_contador', 'suspendido_hasta'])
+
+            # Cancelar el ticket
+            ticket.estado = 'cancelado'
+            ticket.save(update_fields=['estado'])
+
+            return Response({
+                'mensaje': 'Ticket cancelado. Has sido suspendido por cancelar en una fila que no lo permite.',
+                'castigo': f"{'Permanente' if usuario.suspendido_contador >= 5 else f'{minutos_castigo} minutos de suspensión'}"
+            }, status=status.HTTP_200_OK)
+
         else:
-            minutos_castigo = usuario.suspendido_contador  # 1, 2, ..., 4
-            usuario.estado = 'suspendido'
-            usuario.suspendido_hasta = tiempo_actual + timedelta(minutes=minutos_castigo)
+            # Si la fila permite cancelar, simplemente cancela sin castigo
+            ticket.estado = 'cancelado'
+            ticket.save(update_fields=['estado'])
 
-        usuario.save(update_fields=['estado', 'suspendido_contador', 'suspendido_hasta'])
-
-        return Response({
-            'mensaje': 'Ticket cancelado correctamente.',
-            'castigo': f"{'Permanente' if usuario.suspendido_contador >= 5 else f'{minutos_castigo} minutos de suspensión'}"
-        }, status=status.HTTP_200_OK)
-
-    
+            return Response({'mensaje': 'Ticket cancelado correctamente. No se aplicó ninguna penalización.'}, status=status.HTTP_200_OK)

@@ -45,8 +45,8 @@ class FilaAtencion(models.Model):
     apertura = models.TimeField()
     finalizacion = models.TimeField()
     numero_ticket_actual = models.IntegerField(default=0)
+    permitir_cancelacion = models.BooleanField(default=False)
     negocio = models.ForeignKey(Negocio, on_delete=models.RESTRICT)
-
 
     def __str__(self):
         return self.nombre
