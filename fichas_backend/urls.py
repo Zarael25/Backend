@@ -16,10 +16,14 @@ Including another URLconf
 """
 from django.contrib import admin
 from django.urls import path, include
-
+from django.conf import settings
+from django.conf.urls.static import static
 urlpatterns = [
     path('admin/', admin.site.urls),
     path('api/', include('fichas_backend.api_urls')),
     #path('api/negocios/', include('negocios.urls')),  # Incluye las rutas de la app Negocios
     #path('api/usuarios/', include('usuarios.urls')),  # Incluye las rutas de la app Usuarios
 ]
+
+if settings.DEBUG:
+    urlpatterns += static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)

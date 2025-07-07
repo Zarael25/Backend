@@ -24,7 +24,7 @@ class Negocio(models.Model):
     direccion = models.CharField(max_length=255)
     estado = models.CharField(max_length=20, choices=ESTADO_CHOICES, default='en_revision')
     categoria = models.CharField(max_length=50, choices=CATEGORIA_CHOICES)
-    doc_respaldo = models.BinaryField(null=True)
+    doc_respaldo = models.FileField(upload_to='docs_respaldo/', null=True, blank=True)
     num_referencia = models.CharField(max_length=50, unique=True)
     detalle = models.TextField()
     usuario = models.ForeignKey('usuarios.Usuario', on_delete=models.RESTRICT)

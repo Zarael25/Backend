@@ -167,3 +167,6 @@ SIMPLE_JWT = {
 
 AUTH_USER_MODEL = 'usuarios.Usuario'
 CORS_ALLOW_ALL_ORIGINS = True
+
+MEDIA_URL = '/media/'
+MEDIA_ROOT = BASE_DIR / 'media'
