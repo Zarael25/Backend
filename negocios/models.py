@@ -28,6 +28,17 @@ class Negocio(models.Model):
     num_referencia = models.CharField(max_length=50, unique=True)
     detalle = models.TextField()
     usuario = models.ForeignKey('usuarios.Usuario', on_delete=models.RESTRICT)
+    # Políticas de cancelación y reservas
+    permite_cancelar = models.BooleanField(default=False)
+    tiempo_limite_cancelacion = models.PositiveIntegerField(
+        default=60,  # Por ejemplo, 60 minutos antes
+        help_text="Tiempo en minutos"
+    )
+    maximo_reservas_diarias = models.PositiveIntegerField(
+        default=0,  # 0 puede interpretarse como 'ilimitado'
+        help_text="0 para ilimitado"
+    )
+
 
     def __str__(self):
         return self.nombre
@@ -45,7 +56,6 @@ class FilaAtencion(models.Model):
     apertura = models.TimeField()
     finalizacion = models.TimeField()
     numero_ticket_actual = models.IntegerField(default=0)
-    permitir_cancelacion = models.BooleanField(default=False)
     negocio = models.ForeignKey(Negocio, on_delete=models.RESTRICT)
 
     def __str__(self):
@@ -73,3 +83,29 @@ class Ticket(models.Model):
 
     def __str__(self):
         return f"Ticket {self.ticket_id}"
+    
+
+
+class CancelacionUsuarioNegocio(models.Model):
+    usuario = models.ForeignKey('usuarios.Usuario', on_delete=models.CASCADE)
+    negocio = models.ForeignKey('negocios.Negocio', on_delete=models.CASCADE)
+    cantidad_cancelaciones = models.PositiveIntegerField(default=0)
+
+    class Meta:
+        unique_together = ('usuario', 'negocio')  # Asegura que no haya duplicados para mismo usuario y negocio
+
+    def __str__(self):
+        return f"Cancelaciones de {self.usuario} en {self.negocio}: {self.cantidad_cancelaciones}"
+    
+    
+class ReservaDiariaUsuario(models.Model):
+    usuario = models.ForeignKey('usuarios.Usuario', on_delete=models.CASCADE)
+    negocio = models.ForeignKey('negocios.Negocio', on_delete=models.CASCADE)
+    fecha = models.DateField()
+    cantidad_reservas = models.PositiveIntegerField(default=0)
+
+    class Meta:
+        unique_together = ('usuario', 'negocio', 'fecha')
+
+    def __str__(self):
+        return f"{self.usuario} - {self.negocio} ({self.fecha})"

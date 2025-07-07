@@ -6,7 +6,7 @@ from rest_framework.response import Response
 from rest_framework import status
 from rest_framework.exceptions import PermissionDenied
 
-from .models import Negocio, FilaAtencion, Ticket
+from .models import Negocio, FilaAtencion, Ticket,ReservaDiariaUsuario
 from .serializers import NegocioSerializer, FilaAtencionSerializer, TicketSerializer
 from .services import obtener_negocios_por_usuario
 from django.db.models import Q
@@ -106,6 +106,25 @@ class NegocioViewSet(viewsets.ModelViewSet):
         serializer = FilaAtencionSerializer(filas_visibles, many=True)
         return Response(serializer.data, status=status.HTTP_200_OK)
     
+    @action(detail=True, methods=['patch'], permission_classes=[IsAuthenticated], url_path='editar-politicas')
+    def editar_politicas(self, request, pk=None):
+        negocio = self.get_object()
+
+        # Solo puede editar el dueño o un admin
+        if negocio.usuario != request.user and not request.user.is_staff:
+            return Response({"detail": "No tienes permiso para editar las políticas de este negocio."}, status=status.HTTP_403_FORBIDDEN)
+
+        campos_permitidos = ['permite_cancelar', 'tiempo_limite_cancelacion', 'maximo_reservas_diarias']
+        datos = {key: value for key, value in request.data.items() if key in campos_permitidos}
+
+        serializer = self.get_serializer(negocio, data=datos, partial=True)
+        serializer.is_valid(raise_exception=True)
+        serializer.save()
+
+        return Response(serializer.data, status=status.HTTP_200_OK)
+
+
+    
 
 
 class FilaAtencionViewSet(viewsets.ModelViewSet):
@@ -147,7 +166,7 @@ class FilaAtencionViewSet(viewsets.ModelViewSet):
         # Lista de campos que se pueden editar
         campos_permitidos = [
             'nombre', 'cantidad_tickets', 'visible', 'periodo_atencion',
-            'apertura', 'finalizacion', 'numero_ticket_actual','permitir_cancelacion'
+            'apertura', 'finalizacion', 'numero_ticket_actual'
         ]
         datos = {key: value for key, value in request.data.items() if key in campos_permitidos}
 
@@ -155,6 +174,7 @@ class FilaAtencionViewSet(viewsets.ModelViewSet):
         serializer.is_valid(raise_exception=True)
         serializer.save()
         return Response(serializer.data)
+    
     
 
 
@@ -169,7 +189,6 @@ class TicketViewSet(viewsets.ModelViewSet):
     def generar_ticket(self, request):
         usuario = request.user
 
-        #  Verificar si el usuario está suspendido
         if usuario.esta_suspendido:
             return Response({'error': 'Tu cuenta está suspendida. Intenta más tarde.'}, status=status.HTTP_403_FORBIDDEN)
 
@@ -182,24 +201,39 @@ class TicketViewSet(viewsets.ModelViewSet):
         except FilaAtencion.DoesNotExist:
             return Response({'error': 'Fila de atención no encontrada.'}, status=status.HTTP_404_NOT_FOUND)
 
-        #  Verificar si ya tiene un ticket activo en esta fila
+        negocio = fila.negocio
+
+        # Verificar límite de reservas diarias del negocio
+        if negocio.maximo_reservas_diarias and negocio.maximo_reservas_diarias > 0:
+            hoy = timezone.localdate()
+            reserva, _ = ReservaDiariaUsuario.objects.get_or_create(
+                usuario=usuario,
+                negocio=negocio,
+                fecha=hoy,
+                defaults={'cantidad_reservas': 0}
+            )
+
+            if reserva.cantidad_reservas >= negocio.maximo_reservas_diarias:
+                return Response({
+                    'error': 'Has alcanzado el máximo de reservas diarias permitidas para este negocio.'
+                }, status=status.HTTP_403_FORBIDDEN)
+
+        # Verificar ticket activo en esta fila
         tickets_usuario = UsuarioTicket.objects.filter(
             usuario=usuario,
             ticket__fila_atencion=fila,
             ticket__estado='activo'
         )
-        
         if tickets_usuario.exists():
             return Response({'error': 'Ya tienes un ticket activo en esta fila.'}, status=status.HTTP_400_BAD_REQUEST)
 
-        #  Continuar con la lógica actual si no tiene ticket aún
         nueva_posicion = fila.numero_ticket_actual + 1
         if nueva_posicion > fila.cantidad_tickets:
             return Response({'error': 'Se ha alcanzado el límite de tickets para esta fila.'}, status=status.HTTP_400_BAD_REQUEST)
 
         fecha_hora_atencion = None
         if fila.periodo_atencion and fila.periodo_atencion.total_seconds() > 0:
-            hoy = timezone.localtime().date()
+            hoy = timezone.localdate()
             hora_base = datetime.combine(hoy, fila.apertura)
             fecha_hora_atencion = hora_base + (fila.periodo_atencion * (nueva_posicion - 1))
 
@@ -217,8 +251,12 @@ class TicketViewSet(viewsets.ModelViewSet):
         fila.numero_ticket_actual = nueva_posicion
         fila.save()
 
-        # Asociar el ticket al usuario
         UsuarioTicket.objects.create(usuario=usuario, ticket=ticket)
+
+        # Incrementar el contador de reservas diarias
+        if negocio.maximo_reservas_diarias and negocio.maximo_reservas_diarias > 0:
+            reserva.cantidad_reservas += 1
+            reserva.save(update_fields=['cantidad_reservas'])
 
         serializer = self.get_serializer(ticket)
         return Response(serializer.data, status=status.HTTP_201_CREATED)

@@ -11,6 +11,7 @@ from .services import obtener_datos_usuario
 from django.utils import timezone
 from datetime import timedelta
 from rest_framework.exceptions import AuthenticationFailed
+from negocios.models import CancelacionUsuarioNegocio
 
 class UsuarioViewSet(viewsets.ModelViewSet):
     queryset = Usuario.objects.all()
@@ -139,46 +140,74 @@ class UsuarioTicketViewSet(viewsets.ReadOnlyModelViewSet):
 
         ticket = usuario_ticket.ticket
 
-        # Verificar que el ticket esté en estado "activo"
         if ticket.estado != 'activo':
             return Response({'error': 'Solo se pueden cancelar tickets con estado activo.'}, status=status.HTTP_400_BAD_REQUEST)
 
+        negocio = ticket.fila_atencion.negocio
 
+        # Si el negocio no permite cancelar, aplicar penalización directa
+        if not negocio.permite_cancelar:
+            return self.aplicar_penalizacion_y_cancelar(usuario, ticket, motivo="Este negocio no permite cancelaciones.")
 
-        if not ticket.fila_atencion.permitir_cancelacion:
-            # Aplicar política de castigo (solo si la fila lo prohíbe)
-            tiempo_actual = timezone.now()
-            tiempo_generacion = usuario_ticket.ticket.fecha_hora_registro
-            diferencia = tiempo_actual - tiempo_generacion
+        # Obtener o crear registro de cancelaciones para este usuario y negocio
+        cancelacion_obj, creado = CancelacionUsuarioNegocio.objects.get_or_create(
+            usuario=usuario,
+            negocio=negocio,
+            defaults={'cantidad_cancelaciones': 0}
+        )
 
-            if diferencia > timedelta(hours=1):
-                return Response({'error': 'El ticket solo puede cancelarse dentro de una hora después de su generación.'}, status=status.HTTP_400_BAD_REQUEST)
-
+        # Revisar cantidad de cancelaciones previas
+        if cancelacion_obj.cantidad_cancelaciones >= 3:
             # Penalización
-            usuario.suspendido_contador += 1
-
-            if usuario.suspendido_contador >= 5:
-                usuario.estado = 'suspendido'
-                usuario.suspendido_hasta = None  # Suspensión permanente
-            else:
-                minutos_castigo = usuario.suspendido_contador
-                usuario.estado = 'suspendido'
-                usuario.suspendido_hasta = timezone.now() + timedelta(minutes=minutos_castigo)
-
-            usuario.save(update_fields=['estado', 'suspendido_contador', 'suspendido_hasta'])
-
-            # Cancelar el ticket
+            return self.aplicar_penalizacion_y_cancelar(
+                usuario, ticket,
+                motivo="Has cancelado más de 3 veces en este negocio. Se aplica penalización."
+            )
+        elif cancelacion_obj.cantidad_cancelaciones == 2:
+            # 3era cancelación: solo advertencia
             ticket.estado = 'cancelado'
             ticket.save(update_fields=['estado'])
+
+            # Incrementar contador
+            cancelacion_obj.cantidad_cancelaciones += 1
+            cancelacion_obj.save(update_fields=['cantidad_cancelaciones'])
 
             return Response({
-                'mensaje': 'Ticket cancelado. Has sido suspendido por cancelar en una fila que no lo permite.',
-                'castigo': f"{'Permanente' if usuario.suspendido_contador >= 5 else f'{minutos_castigo} minutos de suspensión'}"
+                'mensaje': 'Ticket cancelado correctamente.',
+                'advertencia': 'Ya has cancelado 3 veces en este negocio. La próxima se aplicará una penalización.'
             }, status=status.HTTP_200_OK)
-
         else:
-            # Si la fila permite cancelar, simplemente cancela sin castigo
+            # Primeras dos cancelaciones sin castigo
             ticket.estado = 'cancelado'
             ticket.save(update_fields=['estado'])
 
-            return Response({'mensaje': 'Ticket cancelado correctamente. No se aplicó ninguna penalización.'}, status=status.HTTP_200_OK)
+            # Incrementar contador
+            cancelacion_obj.cantidad_cancelaciones += 1
+            cancelacion_obj.save(update_fields=['cantidad_cancelaciones'])
+
+            return Response({
+                'mensaje': f'Ticket cancelado correctamente. Cancelaciones previas en este negocio: {cancelacion_obj.cantidad_cancelaciones}'
+            }, status=status.HTTP_200_OK)
+
+    def aplicar_penalizacion_y_cancelar(self, usuario, ticket, motivo=""):
+        usuario.suspendido_contador += 1
+
+        if usuario.suspendido_contador >= 5:
+            usuario.estado = 'suspendido'
+            usuario.suspendido_hasta = None
+            castigo = "Suspensión permanente"
+        else:
+            minutos_castigo = usuario.suspendido_contador
+            usuario.estado = 'suspendido'
+            usuario.suspendido_hasta = timezone.now() + timedelta(minutes=minutos_castigo)
+            castigo = f"Suspensión por {minutos_castigo} minutos"
+
+        usuario.save(update_fields=['estado', 'suspendido_contador', 'suspendido_hasta'])
+
+        ticket.estado = 'cancelado'
+        ticket.save(update_fields=['estado'])
+
+        return Response({
+            'mensaje': f'Ticket cancelado con penalización. Motivo: {motivo}',
+            'castigo': castigo
+        }, status=status.HTTP_200_OK)
