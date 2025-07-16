@@ -7,12 +7,12 @@ from rest_framework import status
 from rest_framework.exceptions import PermissionDenied
 
 from .models import Negocio, FilaAtencion, Ticket,ReservaDiariaUsuario
-from .serializers import NegocioSerializer, FilaAtencionSerializer, TicketSerializer
+from .serializers import NegocioSerializer, FilaAtencionSerializer, TicketSerializer, TicketConUsuarioSerializer
 from .services import obtener_negocios_por_usuario
 from django.db.models import Q
 
 from django.utils import timezone
-from datetime import datetime, timedelta
+from datetime import datetime, time, timedelta
 
 from usuarios.models import UsuarioTicket
 
@@ -201,62 +201,126 @@ class TicketViewSet(viewsets.ModelViewSet):
         except FilaAtencion.DoesNotExist:
             return Response({'error': 'Fila de atención no encontrada.'}, status=status.HTTP_404_NOT_FOUND)
 
+        if not fila.visible:
+            return Response({'error': 'Esta fila no está disponible actualmente.'}, status=status.HTTP_403_FORBIDDEN)
+
+
+
         negocio = fila.negocio
 
-        # Verificar límite de reservas diarias del negocio
-        if negocio.maximo_reservas_diarias and negocio.maximo_reservas_diarias > 0:
-            hoy = timezone.localdate()
-            reserva, _ = ReservaDiariaUsuario.objects.get_or_create(
+        ahora = timezone.localtime()
+        hoy = ahora.date()
+        hora_actual = ahora.time()
+
+        # Si ya pasó la hora de finalización, solo intentamos mañana
+        if hora_actual > fila.finalizacion:
+            posibles_fechas = [hoy + timedelta(days=1)]
+        else:
+            posibles_fechas = [hoy]
+
+        ticket_generado = None
+        for fecha in posibles_fechas:
+            # Contar cuántos tickets hay ya para esa fecha
+            tickets_existentes = Ticket.objects.filter(
+                fila_atencion=fila,
+                fecha_hora_atencion__date=fecha
+            ).count()
+
+            if tickets_existentes >= fila.cantidad_tickets:
+                continue  # Ya no hay espacio, probamos el siguiente día
+
+            nueva_posicion = tickets_existentes + 1
+
+            # Calcular fecha_hora_atencion
+            if fila.periodo_atencion and fila.periodo_atencion.total_seconds() > 0:
+                hora_base = datetime.combine(fecha, fila.apertura)
+                fecha_hora_atencion = hora_base + (fila.periodo_atencion * (nueva_posicion - 1))
+
+                # Validamos que no se exceda el horario
+                if fecha_hora_atencion.time() > fila.finalizacion:
+                    continue  # No se puede asignar esa hora, probamos siguiente día si hay
+
+            else:
+                # Si no hay periodo de atención, solo asignamos la fecha con hora 00:00
+                fecha_hora_atencion = datetime.combine(fecha, time(0, 0))
+
+            # Verificar si ya tiene un ticket activo en esta fila
+            ya_tiene = UsuarioTicket.objects.filter(
                 usuario=usuario,
-                negocio=negocio,
-                fecha=hoy,
-                defaults={'cantidad_reservas': 0}
+                ticket__fila_atencion=fila,
+                ticket__estado='activo'
+            ).exists()
+            if ya_tiene:
+                return Response({'error': 'Ya tienes un ticket activo en esta fila.'}, status=status.HTTP_400_BAD_REQUEST)
+
+            # Verificar reservas diarias
+            if negocio.maximo_reservas_diarias and negocio.maximo_reservas_diarias > 0:
+                reserva, _ = ReservaDiariaUsuario.objects.get_or_create(
+                    usuario=usuario,
+                    negocio=negocio,
+                    fecha=fecha,
+                    defaults={'cantidad_reservas': 0}
+                )
+                if reserva.cantidad_reservas >= negocio.maximo_reservas_diarias:
+                    return Response({'error': 'Has alcanzado el máximo de reservas diarias permitidas.'}, status=status.HTTP_403_FORBIDDEN)
+
+            # Crear el ticket
+            ticket = Ticket.objects.create(
+                estado='activo',
+                fila_atencion=fila,
+                posicion=nueva_posicion,
+                fecha_hora_atencion=fecha_hora_atencion
             )
 
-            if reserva.cantidad_reservas >= negocio.maximo_reservas_diarias:
-                return Response({
-                    'error': 'Has alcanzado el máximo de reservas diarias permitidas para este negocio.'
-                }, status=status.HTTP_403_FORBIDDEN)
+            fila.numero_ticket_actual = nueva_posicion
+            fila.save()
 
-        # Verificar ticket activo en esta fila
-        tickets_usuario = UsuarioTicket.objects.filter(
-            usuario=usuario,
-            ticket__fila_atencion=fila,
-            ticket__estado='activo'
-        )
-        if tickets_usuario.exists():
-            return Response({'error': 'Ya tienes un ticket activo en esta fila.'}, status=status.HTTP_400_BAD_REQUEST)
+            UsuarioTicket.objects.create(usuario=usuario, ticket=ticket)
 
-        nueva_posicion = fila.numero_ticket_actual + 1
-        if nueva_posicion > fila.cantidad_tickets:
-            return Response({'error': 'Se ha alcanzado el límite de tickets para esta fila.'}, status=status.HTTP_400_BAD_REQUEST)
+            if negocio.maximo_reservas_diarias and negocio.maximo_reservas_diarias > 0:
+                reserva.cantidad_reservas += 1
+                reserva.save(update_fields=['cantidad_reservas'])
 
-        fecha_hora_atencion = None
-        if fila.periodo_atencion and fila.periodo_atencion.total_seconds() > 0:
-            hoy = timezone.localdate()
-            hora_base = datetime.combine(hoy, fila.apertura)
-            fecha_hora_atencion = hora_base + (fila.periodo_atencion * (nueva_posicion - 1))
+            ticket_generado = ticket
+            break  # Ya se generó, no seguimos buscando fechas
 
-            hora_final = datetime.combine(hoy, fila.finalizacion)
-            if fecha_hora_atencion.time() > fila.finalizacion:
-                return Response({'error': 'No se puede asignar un ticket porque excede el horario de atención.'}, status=status.HTTP_400_BAD_REQUEST)
+        if not ticket_generado:
+            return Response({'error': 'No hay espacio disponible para hoy ni mañana.'}, status=status.HTTP_400_BAD_REQUEST)
 
-        ticket = Ticket.objects.create(
-            estado='activo',
-            fila_atencion=fila,
-            posicion=nueva_posicion,
-            fecha_hora_atencion=fecha_hora_atencion
-        )
-
-        fila.numero_ticket_actual = nueva_posicion
-        fila.save()
-
-        UsuarioTicket.objects.create(usuario=usuario, ticket=ticket)
-
-        # Incrementar el contador de reservas diarias
-        if negocio.maximo_reservas_diarias and negocio.maximo_reservas_diarias > 0:
-            reserva.cantidad_reservas += 1
-            reserva.save(update_fields=['cantidad_reservas'])
-
-        serializer = self.get_serializer(ticket)
+        serializer = self.get_serializer(ticket_generado)
         return Response(serializer.data, status=status.HTTP_201_CREATED)
+    
+
+
+    @action(detail=True, methods=['get'], url_path='por-fila', permission_classes=[IsAuthenticated])
+    def listar_tickets_por_fila(self, request, pk=None):
+        fila_id = pk  # Aquí recibes el 21 de /tickets/21/por-fila/
+        usuario = request.user
+
+        try:
+            fila = FilaAtencion.objects.get(fila_atencion_id=fila_id)
+        except FilaAtencion.DoesNotExist:
+            return Response({'error': 'Fila no encontrada.'}, status=status.HTTP_404_NOT_FOUND)
+
+        if fila.negocio.usuario != usuario:
+            return Response({'error': 'No tienes permiso para ver los tickets de esta fila.'}, status=status.HTTP_403_FORBIDDEN)
+
+        fecha_str = request.query_params.get('fecha', None)
+        if fecha_str:
+            try:
+                fecha_obj = datetime.strptime(fecha_str, '%Y-%m-%d').date()
+            except ValueError:
+                return Response({'error': 'Formato de fecha inválido. Usa YYYY-MM-DD.'}, status=status.HTTP_400_BAD_REQUEST)
+
+            inicio_dia = datetime.combine(fecha_obj, time.min)
+            fin_dia = datetime.combine(fecha_obj, time.max)
+
+            tickets = Ticket.objects.filter(
+                fila_atencion=fila,
+                fecha_hora_atencion__range=(inicio_dia, fin_dia)
+            ).order_by('posicion')
+        else:
+            tickets = Ticket.objects.filter(fila_atencion=fila).order_by('posicion')
+
+        serializer = TicketConUsuarioSerializer(tickets, many=True)
+        return Response(serializer.data)
