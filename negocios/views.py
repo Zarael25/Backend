@@ -348,8 +348,37 @@ class TicketViewSet(viewsets.ModelViewSet):
             return Response({"error": "Estado inválido. Solo se permite 'finalizado' o 'cancelado'."},
                             status=status.HTTP_400_BAD_REQUEST)
 
+        # Si se cancela, aplicamos penalización al usuario dueño del ticket (asumiendo que es el que sacó el ticket)
+        if nuevo_estado == 'cancelado':
+            usuario_ticket = UsuarioTicket.objects.filter(ticket=ticket).first()
+            if usuario_ticket:
+                usuario_a_penalizar = usuario_ticket.usuario
+
+                # Incrementar contador de suspensión
+                usuario_a_penalizar.suspendido_contador += 1
+
+                if usuario_a_penalizar.suspendido_contador >= 5:
+                    usuario_a_penalizar.estado = 'suspendido'
+                    usuario_a_penalizar.suspendido_hasta = None
+                    castigo = "Suspensión permanente"
+                else:
+                    minutos_castigo = usuario_a_penalizar.suspendido_contador
+                    usuario_a_penalizar.estado = 'suspendido'
+                    usuario_a_penalizar.suspendido_hasta = timezone.now() + timedelta(minutes=minutos_castigo)
+                    castigo = f"Suspensión por {minutos_castigo} minutos"
+
+                usuario_a_penalizar.save(update_fields=['estado', 'suspendido_contador', 'suspendido_hasta'])
+
         ticket.estado = nuevo_estado
         ticket.save()
 
         serializer = self.get_serializer(ticket)
+
+        if nuevo_estado == 'cancelado':
+            return Response({
+                'mensaje': 'Ticket cancelado y penalización aplicada.',
+                'castigo': castigo,
+                'ticket': serializer.data
+            }, status=status.HTTP_200_OK)
+
         return Response(serializer.data, status=status.HTTP_200_OK)
