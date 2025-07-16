@@ -324,3 +324,32 @@ class TicketViewSet(viewsets.ModelViewSet):
 
         serializer = TicketConUsuarioSerializer(tickets, many=True)
         return Response(serializer.data)
+    
+
+    @action(detail=True, methods=['patch'], url_path='cambiar-estado', permission_classes=[IsAuthenticated])
+    def cambiar_estado(self, request, pk=None):
+        usuario = request.user
+
+        try:
+            ticket = Ticket.objects.get(pk=pk)
+        except Ticket.DoesNotExist:
+            return Response({"error": "Ticket no encontrado."}, status=status.HTTP_404_NOT_FOUND)
+
+        fila = ticket.fila_atencion
+        negocio = fila.negocio
+
+        if negocio.usuario != usuario:
+            return Response({"error": "No tienes permiso para modificar este ticket."},
+                            status=status.HTTP_403_FORBIDDEN)
+
+        nuevo_estado = request.data.get('nuevo_estado')
+
+        if nuevo_estado not in ['finalizado', 'cancelado']:
+            return Response({"error": "Estado inválido. Solo se permite 'finalizado' o 'cancelado'."},
+                            status=status.HTTP_400_BAD_REQUEST)
+
+        ticket.estado = nuevo_estado
+        ticket.save()
+
+        serializer = self.get_serializer(ticket)
+        return Response(serializer.data, status=status.HTTP_200_OK)
