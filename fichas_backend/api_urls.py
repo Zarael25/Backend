@@ -3,7 +3,8 @@ from rest_framework.routers import DefaultRouter
 
 from usuarios.views import (
     UsuarioViewSet, UsuarioTicketViewSet, RegistroUsuarioViewSet,
-    LoginUsuarioViewSet, LogoutUsuarioViewSet, PerfilUsuarioViewSet
+    LoginUsuarioViewSet, LogoutUsuarioViewSet, PerfilUsuarioViewSet,
+    LoginAdminViewSet
 )
 from negocios.views import NegocioViewSet, FilaAtencionViewSet, TicketViewSet
 from rest_framework_simplejwt.views import TokenRefreshView
@@ -24,6 +25,10 @@ router.register(r'tickets', TicketViewSet)
 
 # Logout personalizado
 logout_view = LogoutUsuarioViewSet.as_view({'post': 'logout'})
+
+router.register(r'adminlogin', LoginAdminViewSet, basename='login_admin')
+
+
 
 urlpatterns = [
     path('', include(router.urls)),
