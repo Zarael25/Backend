@@ -211,3 +211,26 @@ class UsuarioTicketViewSet(viewsets.ReadOnlyModelViewSet):
             'mensaje': f'Ticket cancelado con penalización. Motivo: {motivo}',
             'castigo': castigo
         }, status=status.HTTP_200_OK)
+
+
+
+class LoginAdminViewSet(viewsets.ViewSet):
+    """
+    ViewSet para que los administradores inicien sesión con username y contraseña.
+    """
+    def create(self, request):
+        try:
+            username = request.data.get("username")
+            password = request.data.get("password")
+
+            if not username or not password:
+                return Response({"error": "Username y contraseña son obligatorios."}, status=status.HTTP_400_BAD_REQUEST)
+
+            token_data = services.login_admin(request, username, password)
+            return Response(token_data, status=status.HTTP_200_OK)
+
+        except AuthenticationFailed as e:
+            return Response({"error": str(e)}, status=status.HTTP_401_UNAUTHORIZED)
+
+        except Exception as e:
+            return Response({"error": "Error interno del servidor"}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)

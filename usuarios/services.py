@@ -73,3 +73,34 @@ def registrar_log_usuario(request, tipo_accion):
         ruta_acceso=request.path,
         origen_conexion=origen
     )
+
+
+def login_admin(request, username, password):
+    try:
+        usuario = Usuario.objects.get(username=username)
+    except Usuario.DoesNotExist:
+        raise AuthenticationFailed("Credenciales inválidas")
+
+    if not usuario.check_password(password):
+        raise AuthenticationFailed("Credenciales inválidas")
+
+    if usuario.esta_suspendido:
+        raise AuthenticationFailed("El usuario está suspendido, comunicarse con admin@filas.com")
+
+    if usuario.tipo_usuario != 'admin':
+        raise AuthenticationFailed("Acceso denegado: solo administradores pueden iniciar sesión aquí.")
+
+    request.user = usuario
+    registrar_log_usuario(request, "inicio de sesión como administrador")
+
+    refresh = RefreshToken.for_user(usuario)
+
+    return {
+        'refresh': str(refresh),
+        'access': str(refresh.access_token),
+        'usuario_id': usuario.usuario_id,
+        'nombre': usuario.nombre,
+        'suscripcion': usuario.suscripcion,
+        'tipo_usuario': usuario.tipo_usuario,
+    }
+
