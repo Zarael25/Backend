@@ -16,6 +16,17 @@ from negocios.models import CancelacionUsuarioNegocio
 class UsuarioViewSet(viewsets.ModelViewSet):
     queryset = Usuario.objects.all()
     serializer_class = UsuarioSerializer
+    permission_classes = [IsAuthenticated]  # asegúrate que el usuario esté logueado
+
+    def get_queryset(self):
+        return Usuario.objects.exclude(tipo_usuario='admin')
+
+    def list(self, request, *args, **kwargs):
+        # Verificamos si es admin
+        if request.user.tipo_usuario != 'admin':
+            return Response({"error": "Acceso denegado. Solo administradores pueden ver la lista de usuarios."},
+                            status=status.HTTP_403_FORBIDDEN)
+        return super().list(request, *args, **kwargs)
 
 class UsuarioTicketViewSet(viewsets.ModelViewSet):
     queryset = UsuarioTicket.objects.all()
