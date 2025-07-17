@@ -12,6 +12,8 @@ from django.utils import timezone
 from datetime import timedelta
 from rest_framework.exceptions import AuthenticationFailed
 from negocios.models import CancelacionUsuarioNegocio
+from django.db.models import Q
+
 
 class UsuarioViewSet(viewsets.ModelViewSet):
     queryset = Usuario.objects.all()
@@ -27,6 +29,33 @@ class UsuarioViewSet(viewsets.ModelViewSet):
             return Response({"error": "Acceso denegado. Solo administradores pueden ver la lista de usuarios."},
                             status=status.HTTP_403_FORBIDDEN)
         return super().list(request, *args, **kwargs)
+    
+
+    @action(detail=False, methods=['get'], permission_classes=[IsAuthenticated], url_path='buscar')
+    def buscar(self, request):
+        if request.user.tipo_usuario != 'admin':
+            return Response({"error": "Acceso denegado. Solo administradores pueden buscar usuarios."},
+                            status=status.HTTP_403_FORBIDDEN)
+        
+        termino = request.query_params.get('search', '').strip()
+        queryset = self.get_queryset()
+
+        if termino:
+            queryset = queryset.filter(
+                Q(nombre__icontains=termino) |
+                Q(username__icontains=termino) |
+                Q(correo__icontains=termino)
+            )
+        
+        serializer = self.get_serializer(queryset, many=True)
+        return Response(serializer.data)
+    
+
+
+
+
+
+
 
 class UsuarioTicketViewSet(viewsets.ModelViewSet):
     queryset = UsuarioTicket.objects.all()
