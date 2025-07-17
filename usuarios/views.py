@@ -44,7 +44,8 @@ class UsuarioViewSet(viewsets.ModelViewSet):
             queryset = queryset.filter(
                 Q(nombre__icontains=termino) |
                 Q(username__icontains=termino) |
-                Q(correo__icontains=termino)
+                Q(correo__icontains=termino)|
+                Q(estado__icontains=termino)
             )
         
         serializer = self.get_serializer(queryset, many=True)
