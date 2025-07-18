@@ -58,6 +58,10 @@ class UsuarioViewSet(viewsets.ModelViewSet):
 
 
 
+
+
+
+
 class UsuarioTicketViewSet(viewsets.ModelViewSet):
     queryset = UsuarioTicket.objects.all()
     serializer_class = UsuarioTicketSerializer
