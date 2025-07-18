@@ -53,7 +53,36 @@ class UsuarioViewSet(viewsets.ModelViewSet):
     
 
 
+    @action(detail=True, methods=['patch'], permission_classes=[IsAuthenticated], url_path='admin_editar')
+    def admin_editar_usuario(self, request, pk=None):
+        if request.user.tipo_usuario != 'admin':
+            return Response({"error": "Solo los administradores pueden editar usuarios."}, status=status.HTTP_403_FORBIDDEN)
 
+        try:
+            usuario = self.get_object()
+            data = request.data
+            cambios = {}
+
+            # Solo actualiza si se envía ese campo
+            if 'estado' in data:
+                usuario.estado = data['estado']
+                cambios['estado'] = data['estado']
+            if 'suscripcion' in data:
+                usuario.suscripcion = data['suscripcion']
+                cambios['suscripcion'] = data['suscripcion']
+            if 'password' in data:
+                usuario.set_password(data['password'])  # encripta
+                cambios['password'] = '***'  # no mostrar el valor real
+
+            usuario.save()
+            return Response({"mensaje": "Usuario actualizado correctamente.", "cambios": cambios}, status=status.HTTP_200_OK)
+
+        except Usuario.DoesNotExist:
+            return Response({"error": "Usuario no encontrado."}, status=status.HTTP_404_NOT_FOUND)
+        except Exception as e:
+            import traceback
+            traceback.print_exc()
+            return Response({"error": str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
 
 
