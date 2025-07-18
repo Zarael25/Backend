@@ -141,6 +141,36 @@ class NegocioViewSet(viewsets.ModelViewSet):
 
         serializer = self.get_serializer(negocios, many=True)
         return Response(serializer.data, status=status.HTTP_200_OK)
+    
+    @action(detail=True, methods=['patch'], permission_classes=[IsAuthenticated], url_path='cambiar_estado')
+    def cambiar_estado(self, request, pk=None):
+        if request.user.tipo_usuario != 'admin':
+            return Response({'detail': 'No autorizado.'}, status=status.HTTP_403_FORBIDDEN)
+
+        negocio = self.get_object()
+        nuevo_estado = request.data.get('estado')
+
+        if nuevo_estado not in dict(Negocio.ESTADO_CHOICES).keys():
+            return Response({'error': 'Estado inválido.'}, status=status.HTTP_400_BAD_REQUEST)
+
+        negocio.estado = nuevo_estado
+        negocio.save()
+        return Response({'mensaje': f"Estado del negocio cambiado a '{nuevo_estado}'."}, status=status.HTTP_200_OK)
+    
+    @action(detail=True, methods=['get'], permission_classes=[IsAuthenticated], url_path='descargar_doc')
+    def descargar_doc_respaldo(self, request, pk=None):
+        negocio = self.get_object()
+
+        if request.user.tipo_usuario != 'admin':
+            return Response({'detail': 'No autorizado.'}, status=status.HTTP_403_FORBIDDEN)
+
+        if not negocio.doc_respaldo:
+            return Response({'error': 'Este negocio no tiene un documento de respaldo.'}, status=status.HTTP_404_NOT_FOUND)
+
+        url = request.build_absolute_uri(negocio.doc_respaldo.url)
+        return Response({'doc_respaldo_url': url}, status=status.HTTP_200_OK)
+    
+    
 
 
 
