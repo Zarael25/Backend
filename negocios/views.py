@@ -122,6 +122,27 @@ class NegocioViewSet(viewsets.ModelViewSet):
         serializer.save()
 
         return Response(serializer.data, status=status.HTTP_200_OK)
+    
+    @action(detail=False, methods=['get'], permission_classes=[IsAuthenticated], url_path='buscar')
+    def listar_negocios_admin(self, request):
+        if request.user.tipo_usuario != 'admin':
+            return Response({"detail": "Solo los administradores pueden acceder a este recurso."}, status=status.HTTP_403_FORBIDDEN)
+
+        termino = request.query_params.get('search', '').strip()
+
+        negocios = Negocio.objects.all()
+
+        if termino:
+            negocios = negocios.filter(
+                Q(nombre__icontains=termino) |
+                Q(categoria__icontains=termino) |
+                Q(estado__icontains=termino)
+            )
+
+        serializer = self.get_serializer(negocios, many=True)
+        return Response(serializer.data, status=status.HTTP_200_OK)
+
+
 
 
     
