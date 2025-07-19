@@ -14,7 +14,6 @@ from rest_framework.exceptions import AuthenticationFailed
 from negocios.models import CancelacionUsuarioNegocio
 from django.db.models import Q
 
-
 class UsuarioViewSet(viewsets.ModelViewSet):
     queryset = Usuario.objects.all()
     serializer_class = UsuarioSerializer
@@ -222,6 +221,16 @@ class UsuarioTicketViewSet(viewsets.ReadOnlyModelViewSet):
         # Si el negocio no permite cancelar, aplicar penalización directa
         if not negocio.permite_cancelar:
             return self.aplicar_penalizacion_y_cancelar(usuario, ticket, motivo="Este negocio no permite cancelaciones.")
+
+
+         # Verificar si aún está en el tiempo permitido de cancelación
+        fecha_limite_cancelacion = ticket.fecha_hora_registro + timedelta(minutes=negocio.tiempo_limite_cancelacion)
+        tiempo_expirado = timezone.now() > fecha_limite_cancelacion
+
+        if tiempo_expirado:
+            # Se permite cancelar, pero con penalización directa
+            return self.aplicar_penalizacion_y_cancelar(usuario, ticket, motivo="Has cancelado fuera del tiempo permitido.")
+
 
         # Obtener o crear registro de cancelaciones para este usuario y negocio
         cancelacion_obj, creado = CancelacionUsuarioNegocio.objects.get_or_create(
