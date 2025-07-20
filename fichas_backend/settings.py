@@ -28,8 +28,13 @@ SECRET_KEY = 'django-insecure-gaabe4*q8e&hs%rji7(gi)w&)7%+h#%#fg=r6pq%r7lpfzimrp
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
-ALLOWED_HOSTS = ['localhost', '127.0.0.1', '10.0.2.2', '192.168.1.101']
-
+ALLOWED_HOSTS = [
+    'localhost',
+    '127.0.0.1',
+    '10.0.2.2',
+    '192.168.1.101',
+    'backend-fichasvirtuales.onrender.com',  # ← este es el nuevo dominio
+]
 
 # Application definition
 
