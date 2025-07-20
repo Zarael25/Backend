@@ -4,7 +4,7 @@ services:
     env: python
     plan: free
     buildCommand: "pip install -r requirements.txt && python manage.py migrate --noinput && python manage.py collectstatic --noinput"
-    startCommand: "python manage.py migrate --noinput && gunicorn fichas_backend.wsgi:application"
+    startCommand: "gunicorn fichas_backend.wsgi:application"
     envVars:
       - key: DATABASE_URL
         sync: false
