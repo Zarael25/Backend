@@ -1,5 +1,21 @@
-DB_NAME=your_database_name
-DB_USER=your_username
-DB_PASSWORD=your_password
+##----------------LOCAL
+DB_NAME=FichaDB
+DB_USER=postgres
+DB_PASSWORD=tu_password_local
 DB_HOST=localhost
 DB_PORT=5432
+
+##---------DESPLIEGUE
+# Usuario por defecto de Render u otro proveedor
+DATABASE_URL=postgresql://USUARIO:CONTRASEÑA@HOST:PUERTO/NOMBRE_BD
+
+# Conexión con otros Roles (ejemplos, sin credenciales reales)
+
+#acceso_admin
+#DATABASE_URL=postgresql://acceso_admin:ADMIN_PASSWORD@HOST:PUERTO/NOMBRE_BD
+
+#acceso_publico
+#DATABASE_URL=postgresql://acceso_publico:PUBLICO_PASSWORD@HOST:PUERTO/NOMBRE_BD
+
+#solo_lectura
+#DATABASE_URL=postgresql://solo_lectura:LECTURA_PASSWORD@HOST:PUERTO/NOMBRE_BD
