@@ -30,12 +30,15 @@ class UsuarioViewSet(viewsets.ModelViewSet):
         return super().list(request, *args, **kwargs)
     
 
-    @action(detail=False, methods=['get'], permission_classes=[IsAuthenticated], url_path='buscar')
+
+class UsuarioAdminViewSet(viewsets.ModelViewSet):
+    queryset = Usuario.objects.exclude(tipo_usuario='admin')
+    serializer_class = UsuarioSerializer
+    permission_classes = [IsAuthenticated]  # Solo usuarios logueados
+
+    # Acción de búsqueda solo disponible en /apiadmin/
+    @action(detail=False, methods=['get'], url_path='buscar')
     def buscar(self, request):
-        if request.user.tipo_usuario != 'admin':
-            return Response({"error": "Acceso denegado. Solo administradores pueden buscar usuarios."},
-                            status=status.HTTP_403_FORBIDDEN)
-        
         termino = request.query_params.get('search', '').strip()
         queryset = self.get_queryset()
 
@@ -43,20 +46,16 @@ class UsuarioViewSet(viewsets.ModelViewSet):
             queryset = queryset.filter(
                 Q(nombre__icontains=termino) |
                 Q(username__icontains=termino) |
-                Q(correo__icontains=termino)|
+                Q(correo__icontains=termino) | 
                 Q(estado__icontains=termino)
             )
-        
+
         serializer = self.get_serializer(queryset, many=True)
         return Response(serializer.data)
-    
 
-
-    @action(detail=True, methods=['patch'], permission_classes=[IsAuthenticated], url_path='admin_editar')
+    # Acción de edición solo disponible en /apiadmin/
+    @action(detail=True, methods=['patch'], url_path='admin_editar')
     def admin_editar_usuario(self, request, pk=None):
-        if request.user.tipo_usuario != 'admin':
-            return Response({"error": "Solo los administradores pueden editar usuarios."}, status=status.HTTP_403_FORBIDDEN)
-
         try:
             usuario = self.get_object()
             data = request.data
@@ -70,8 +69,8 @@ class UsuarioViewSet(viewsets.ModelViewSet):
                 usuario.suscripcion = data['suscripcion']
                 cambios['suscripcion'] = data['suscripcion']
             if 'password' in data:
-                usuario.set_password(data['password'])  # encripta
-                cambios['password'] = '***'  # no mostrar el valor real
+                usuario.set_password(data['password'])
+                cambios['password'] = '***'
 
             usuario.save()
             return Response({"mensaje": "Usuario actualizado correctamente.", "cambios": cambios}, status=status.HTTP_200_OK)
@@ -82,6 +81,11 @@ class UsuarioViewSet(viewsets.ModelViewSet):
             import traceback
             traceback.print_exc()
             return Response({"error": str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
+
+
+
+
 
 
 

@@ -26,7 +26,7 @@ router.register(r'tickets', TicketViewSet)
 # Logout personalizado
 logout_view = LogoutUsuarioViewSet.as_view({'post': 'logout'})
 
-router.register(r'adminlogin', LoginAdminViewSet, basename='login_admin')
+#router.register(r'adminlogin', LoginAdminViewSet, basename='login_admin')
 
 
 
