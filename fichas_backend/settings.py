@@ -37,6 +37,29 @@ ALLOWED_HOSTS = [
     'backend-fichasvirtuales.onrender.com',  # ← este es el nuevo dominio
 ]
 
+
+
+
+LOGGING = {
+    "version": 1,
+    "disable_existing_loggers": False,
+    "handlers": {
+        "console": {
+            "class": "logging.StreamHandler",
+        },
+    },
+    "root": {
+        "handlers": ["console"],
+        "level": "DEBUG",
+    },
+}
+
+
+
+
+
+
+
 # Application definition
 
 INSTALLED_APPS = [
@@ -57,6 +80,11 @@ MIDDLEWARE = [
     'django.middleware.common.CommonMiddleware',
     'django.middleware.security.SecurityMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
+
+
+    "usuarios.middleware.RequestMiddleware",
+
+
     'django.middleware.common.CommonMiddleware',
     'django.middleware.csrf.CsrfViewMiddleware',
     'django.contrib.auth.middleware.AuthenticationMiddleware',
@@ -65,9 +93,7 @@ MIDDLEWARE = [
 
     'whitenoise.middleware.WhiteNoiseMiddleware',  #Esta línea para el deploy
 
-    "usuarios.middleware.RequestMiddleware",
-
-
+    
 ]
 
 ROOT_URLCONF = 'fichas_backend.urls'
@@ -127,7 +153,7 @@ DATABASES = {
 
 }
 
-DATABASE_ROUTERS = ["usuarios.db_router.RoleBasedRouter"]
+DATABASE_ROUTERS = ["usuarios.db_router.SafeRoleBasedRouter"]
 
 
 
