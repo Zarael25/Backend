@@ -123,30 +123,30 @@ class NegocioViewSet(viewsets.ModelViewSet):
 
         return Response(serializer.data, status=status.HTTP_200_OK)
     
-    @action(detail=False, methods=['get'], permission_classes=[IsAuthenticated], url_path='buscar')
+
+
+    
+# --- API ADMIN ---
+class NegocioAdminViewSet(viewsets.ModelViewSet):
+    queryset = Negocio.objects.all()
+    serializer_class = NegocioSerializer
+    permission_classes = [IsAuthenticated]  # Podrías poner IsAdminUser o un permiso custom
+
+    @action(detail=False, methods=['get'], url_path='buscar')
     def listar_negocios_admin(self, request):
-        if request.user.tipo_usuario != 'admin':
-            return Response({"detail": "Solo los administradores pueden acceder a este recurso."}, status=status.HTTP_403_FORBIDDEN)
-
         termino = request.query_params.get('search', '').strip()
-
         negocios = Negocio.objects.all()
-
         if termino:
             negocios = negocios.filter(
                 Q(nombre__icontains=termino) |
                 Q(categoria__icontains=termino) |
                 Q(estado__icontains=termino)
             )
-
         serializer = self.get_serializer(negocios, many=True)
-        return Response(serializer.data, status=status.HTTP_200_OK)
-    
-    @action(detail=True, methods=['patch'], permission_classes=[IsAuthenticated], url_path='cambiar_estado')
-    def cambiar_estado(self, request, pk=None):
-        if request.user.tipo_usuario != 'admin':
-            return Response({'detail': 'No autorizado.'}, status=status.HTTP_403_FORBIDDEN)
+        return Response(serializer.data)
 
+    @action(detail=True, methods=['patch'], url_path='cambiar_estado')
+    def cambiar_estado(self, request, pk=None):
         negocio = self.get_object()
         nuevo_estado = request.data.get('estado')
 
@@ -156,21 +156,19 @@ class NegocioViewSet(viewsets.ModelViewSet):
         negocio.estado = nuevo_estado
         negocio.save()
         return Response({'mensaje': f"Estado del negocio cambiado a '{nuevo_estado}'."}, status=status.HTTP_200_OK)
-    
-    @action(detail=True, methods=['get'], permission_classes=[IsAuthenticated], url_path='descargar_doc')
+
+    @action(detail=True, methods=['get'], url_path='descargar_doc')
     def descargar_doc_respaldo(self, request, pk=None):
         negocio = self.get_object()
-
-        if request.user.tipo_usuario != 'admin':
-            return Response({'detail': 'No autorizado.'}, status=status.HTTP_403_FORBIDDEN)
-
         if not negocio.doc_respaldo:
             return Response({'error': 'Este negocio no tiene un documento de respaldo.'}, status=status.HTTP_404_NOT_FOUND)
 
         url = request.build_absolute_uri(negocio.doc_respaldo.url)
         return Response({'doc_respaldo_url': url}, status=status.HTTP_200_OK)
-    
-    
+
+
+
+
 
 
 

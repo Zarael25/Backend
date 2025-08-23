@@ -65,6 +65,8 @@ MIDDLEWARE = [
 
     'whitenoise.middleware.WhiteNoiseMiddleware',  #Esta línea para el deploy
 
+    "usuarios.middleware.RequestMiddleware",
+
 
 ]
 
@@ -100,7 +102,16 @@ WSGI_APPLICATION = 'fichas_backend.wsgi.application'
 DATABASES = {
 
 
-    'default': dj_database_url.config(default=config('DATABASE_URL'))
+    'default': dj_database_url.config(default=config('DATABASE_URL')),
+    'admin': dj_database_url.config(default=config('DATABASE_URL_ADMIN')),
+    'publico': dj_database_url.config(default=config('DATABASE_URL_PUBLICO')),
+    'lectura': dj_database_url.config(default=config('DATABASE_URL_LECTURA')),
+
+
+
+
+
+    #'default': dj_database_url.config(default=config('DATABASE_URL'))
 
 
 
@@ -116,7 +127,7 @@ DATABASES = {
 
 }
 
-
+DATABASE_ROUTERS = ["usuarios.db_router.RoleBasedRouter"]
 
 
 
