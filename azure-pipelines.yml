@@ -10,10 +10,14 @@ variables:
 steps:
 - checkout: self
   persistCredentials: true
+  fetchDepth: 0   # Trae todo el historial y todas las ramas
 
 - script: |
     echo "Configurando GitHub remoto..."
-    git remote add origin-gh https://Zarael25:$(GITHUB_TOKEN)@github.com/Zarael25/Backend.git || echo "GitHub remoto ya existe"
+    git remote remove origin-gh || true
+    git remote add origin-gh https://Zarael25:$(GITHUB_TOKEN)@github.com/Zarael25/Backend.git
+    echo "Cambiando a branch develop"
+    git checkout develop
     echo "Haciendo push a GitHub..."
     git push origin-gh develop
   displayName: 'Push Azure develop to GitHub'
