@@ -18,6 +18,7 @@ router.register(r'registro', RegistroUsuarioViewSet, basename='registro')
 router.register(r'login', LoginUsuarioViewSet, basename='login')
 router.register(r'perfil', PerfilUsuarioViewSet, basename='perfil')
 
+
 # Negocios
 router.register(r'negocios', NegocioViewSet, basename='negocios')
 router.register(r'filas', FilaAtencionViewSet)

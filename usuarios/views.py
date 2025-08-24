@@ -29,6 +29,30 @@ class UsuarioViewSet(viewsets.ModelViewSet):
                             status=status.HTTP_403_FORBIDDEN)
         return super().list(request, *args, **kwargs)
     
+    @action(detail=False, methods=['patch'], url_path='editar-perfil')
+    def editar_perfil(self, request):
+        """
+        Permite que el usuario autenticado edite su propio perfil.
+        No se pueden modificar campos admin: estado, suscripcion, tipo_usuario, suspendido_contador, suspendido_hasta
+        """
+        usuario = request.user
+        datos = request.data
+
+        campos_permitidos = ['username', 'correo', 'nombre', 'password']
+        for campo in campos_permitidos:
+            if campo in datos:
+                if campo == 'password':
+                    usuario.set_password(datos[campo])
+                else:
+                    setattr(usuario, campo, datos[campo])
+
+        usuario.save()
+        serializer = self.get_serializer(usuario)
+        return Response(serializer.data, status=status.HTTP_200_OK)
+
+
+
+    
 
 
 class UsuarioAdminViewSet(viewsets.ModelViewSet):
