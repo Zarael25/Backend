@@ -5,30 +5,30 @@ pool:
   vmImage: ubuntu-latest
 
 variables:
-- group: azure_fichas
+- group: azure_fichas   # aquí puedes agregar DATABASE_URL si quieres
 
 steps:
 - checkout: self
   persistCredentials: true
-  fetchDepth: 0   # Trae todo el historial y todas las ramas
+  fetchDepth: 0
 
 # Instalar dependencias y ejecutar pruebas
 - script: |
-    echo "Instalando dependencias y ejecutando pruebas..."
+    echo "Instalando dependencias..."
     python -m venv .venv
     .venv/bin/python -m pip install --upgrade pip
     .venv/bin/pip install -r requirements.txt
-    .venv/bin/pytest -v
+
+    echo "Ejecutando pruebas con pytest..."
+    export DATABASE_URL=postgresql://zarael:6VUsqHHXu5DXWAigiRN1lRkqPq1MUDit@dpg-d1uikm6mcj7s73eikl60-a.oregon-postgres.render.com/fichadbrender
+    .venv/bin/python -m pytest -v
   displayName: 'Instalar dependencias y ejecutar pruebas'
 
-
-# Solo si las pruebas pasan, hacemos push a GitHub
+# Push a GitHub solo si las pruebas pasan
 - script: |
     echo "Configurando GitHub remoto..."
     git remote remove origin-gh || true
     git remote add origin-gh https://Zarael25:$(GITHUB_TOKEN)@github.com/Zarael25/Backend.git
-    echo "Cambiando a branch develop"
     git checkout develop
-    echo "Haciendo push a GitHub..."
     git push origin-gh develop
   displayName: 'Push Azure develop to GitHub'
