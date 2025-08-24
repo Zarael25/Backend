@@ -20,7 +20,8 @@ steps:
     .venv/bin/pip install -r requirements.txt
 
     echo "Exportando variables de entorno..."
-    export DATABASE_URL=$DATABASE_URL   # toma la variable del Variable Group
+    export DATABASE_URL=$DATABASE_URL
+    export DJANGO_SETTINGS_MODULE=fichas_backend.settings
 
     echo "Ejecutando pruebas con pytest..."
     .venv/bin/python -m pytest -v
