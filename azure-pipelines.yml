@@ -21,11 +21,13 @@ steps:
 
     echo "Exportando variables de entorno..."
     export DATABASE_URL=$DATABASE_URL
+    export DATABASE_URL_ADMIN=$DATABASE_URL_ADMIN
     export DJANGO_SETTINGS_MODULE=fichas_backend.settings
 
     echo "Ejecutando pruebas con pytest..."
     .venv/bin/python -m pytest -v
   displayName: 'Instalar dependencias y ejecutar pruebas'
+
 
 # Push a GitHub solo si las pruebas pasan
 - script: |
