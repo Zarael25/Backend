@@ -51,11 +51,16 @@ steps:
 
 
 # Push a GitHub solo si las pruebas pasan
+
 - script: |
     echo "Configurando GitHub remoto..."
     git remote remove origin-gh || true
     git remote add origin-gh https://Zarael25:$(GITHUB_TOKEN)@github.com/Zarael25/Backend.git
 
+    echo "Asegurando que la rama develop exista localmente..."
+    git fetch origin develop:refs/heads/develop
+    git checkout develop || git checkout -b develop
+
     echo "Haciendo push a GitHub..."
-    git push origin-gh develop
+    git push origin-gh HEAD:develop
   displayName: 'Push Azure develop to GitHub'
