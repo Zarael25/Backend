@@ -19,8 +19,10 @@ steps:
     .venv/bin/python -m pip install --upgrade pip
     .venv/bin/pip install -r requirements.txt
 
+    echo "Exportando variables de entorno..."
+    export DATABASE_URL=$DATABASE_URL   # toma la variable del Variable Group
+
     echo "Ejecutando pruebas con pytest..."
-    export DATABASE_URL=postgresql://zarael:6VUsqHHXu5DXWAigiRN1lRkqPq1MUDit@dpg-d1uikm6mcj7s73eikl60-a.oregon-postgres.render.com/fichadbrender
     .venv/bin/python -m pytest -v
   displayName: 'Instalar dependencias y ejecutar pruebas'
 
