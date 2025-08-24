@@ -233,6 +233,8 @@ class FilaAtencionViewSet(viewsets.ModelViewSet):
 class TicketViewSet(viewsets.ModelViewSet):
     queryset = Ticket.objects.all()
     serializer_class = TicketSerializer
+    permission_classes = [IsAuthenticated]
+
 
     @action(detail=False, methods=['post'], url_path='generar', permission_classes=[IsAuthenticated])
     def generar_ticket(self, request):
