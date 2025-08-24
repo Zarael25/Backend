@@ -43,12 +43,13 @@ steps:
 
 
 # Push a GitHub solo si las pruebas pasan
+- checkout: self
+  persistCredentials: true
+  fetchDepth: 0  # Trae todo el historial y ramas
 - script: |
     echo "Configurando GitHub remoto..."
-    git remote add origin-gh https://Zarael25:$(GITHUB_TOKEN)@github.com/Zarael25/Backend.git || true
-
-    echo "Trayendo la rama develop..."
-    git fetch origin develop:develop
+    git remote remove origin-gh || true
+    git remote add origin-gh https://Zarael25:$(GITHUB_TOKEN)@github.com/Zarael25/Backend.git
 
     echo "Haciendo push a GitHub..."
     git push origin-gh develop
