@@ -13,6 +13,7 @@ from datetime import timedelta
 from rest_framework.exceptions import AuthenticationFailed
 from negocios.models import CancelacionUsuarioNegocio
 from django.db.models import Q
+from rest_framework.permissions import AllowAny
 
 class UsuarioViewSet(viewsets.ModelViewSet):
     queryset = Usuario.objects.all()
@@ -121,10 +122,12 @@ class UsuarioAdminViewSet(viewsets.ModelViewSet):
 class UsuarioTicketViewSet(viewsets.ModelViewSet):
     queryset = UsuarioTicket.objects.all()
     serializer_class = UsuarioTicketSerializer
+    permission_classes = [IsAuthenticated]
 
 
 # ViewSet para el registro personalizado de usuarios
 class RegistroUsuarioViewSet(viewsets.ViewSet):
+    permission_classes = [AllowAny]
     def create(self, request):
         try:
             serializer = UsuarioSerializer(data=request.data)
@@ -139,6 +142,7 @@ class RegistroUsuarioViewSet(viewsets.ViewSet):
 
 # ViewSet para el inicio de sesión personalizado de usuarios
 class LoginUsuarioViewSet(viewsets.ViewSet):
+    permission_classes = [AllowAny]
     """
     ViewSet para iniciar sesión con username y contraseña.
     """
@@ -165,7 +169,8 @@ class LogoutUsuarioViewSet(viewsets.ViewSet):
     """
     ViewSet para cerrar sesión (logout) de usuario.
     """
-    
+    permission_classes = [IsAuthenticated]
+
     @action(detail=False, methods=['post'], url_path='logout')
     def logout(self, request):
         refresh_token = request.data.get('refresh')
@@ -329,6 +334,7 @@ class LoginAdminViewSet(viewsets.ViewSet):
     """
     ViewSet para que los administradores inicien sesión con username y contraseña.
     """
+    permission_classes = [AllowAny]
     def create(self, request):
         try:
             username = request.data.get("username")
