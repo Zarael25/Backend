@@ -2,33 +2,45 @@ trigger:
 - develop
 
 pool:
-  vmImage: ubuntu-latest
+  vmImage: 'ubuntu-latest'
 
 variables:
-- group: azure_fichas   # aquí puedes agregar DATABASE_URL si quieres
+  # Puedes usar variables de pipeline secret para no exponer contraseñas
+  DATABASE_URL: $(DATABASE_URL)
+  DATABASE_URL_ADMIN: $(DATABASE_URL_ADMIN)
+  DATABASE_URL_PUBLICO: $(DATABASE_URL_PUBLICO)
+  DATABASE_URL_LECTURA: $(DATABASE_URL_LECTURA)
+  DJANGO_SETTINGS_MODULE: fichas_backend.settings
 
 steps:
-- checkout: self
-  persistCredentials: true
-  fetchDepth: 0
+- task: UsePythonVersion@0
+  inputs:
+    versionSpec: '3.11'
+    addToPath: true
 
-# Instalar dependencias y ejecutar pruebas
 - script: |
-    echo "Instalando dependencias..."
+    echo "Creando virtualenv..."
     python -m venv .venv
-    .venv/bin/python -m pip install --upgrade pip
-    .venv/bin/pip install -r requirements.txt
+    source .venv/bin/activate
 
-    echo "Exportando variables de entorno..."
-    export DATABASE_URL=$DATABASE_URL
-    export DATABASE_URL_ADMIN=$DATABASE_URL_ADMIN
-    export DATABASE_URL_PUBLICO=$DATABASE_URL_PUBLICO
-    export DATABASE_URL_LECTURA=$DATABASE_URL_LECTURA
-    export DJANGO_SETTINGS_MODULE=fichas_backend.settings
+    echo "Actualizando pip..."
+    pip install --upgrade pip
 
-    echo "Ejecutando pruebas con pytest..."
-    .venv/bin/python -m pytest -v
-  displayName: 'Instalar dependencias y ejecutar pruebas'
+    echo "Instalando dependencias..."
+    pip install -r requirements.txt
+
+    echo "Verificando variables de entorno..."
+    echo "DATABASE_URL: $DATABASE_URL"
+    echo "DATABASE_URL_ADMIN: $DATABASE_URL_ADMIN"
+    echo "DATABASE_URL_PUBLICO: $DATABASE_URL_PUBLICO"
+    echo "DATABASE_URL_LECTURA: $DATABASE_URL_LECTURA"
+
+    echo "Ejecutando tests con pytest..."
+    # Forzamos Django a usar solo 'default' para los tests
+    export DJANGO_SETTINGS_MODULE=$DJANGO_SETTINGS_MODULE
+    pytest --ds=fichas_backend.settings --disable-warnings -v
+  displayName: 'Instalar dependencias y ejecutar tests'
+
 
 
 # Push a GitHub solo si las pruebas pasan
