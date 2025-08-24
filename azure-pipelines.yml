@@ -1,0 +1,16 @@
+trigger:
+- develop
+
+pool:
+  vmImage: ubuntu-latest
+
+steps:
+- checkout: self
+  persistCredentials: true
+
+- script: |
+    echo "Configurando GitHub remoto..."
+    git remote add origin-gh https://<USERNAME>:$(GITHUB_TOKEN)@github.com/Zarael25/Backend.git || echo "GitHub remoto ya existe"
+    echo "Haciendo push a GitHub..."
+    git push origin-gh develop
+  displayName: 'Push Azure develop to GitHub'
