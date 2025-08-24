@@ -10,3 +10,4 @@
 [2025-08-24 12:52:45,107] ERROR django.request: Internal Server Error: /api/registro/
 [2025-08-24 12:54:30,966] ERROR django.request: Internal Server Error: /api/registro/
 [2025-08-24 13:47:22,456] ERROR django.request: Internal Server Error: /api/login/
+[2025-08-24 13:59:18,485] ERROR django.request: Internal Server Error: /api/login/

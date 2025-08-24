@@ -2,10 +2,13 @@ from rest_framework.test import APITestCase
 from django.urls import reverse
 from rest_framework import status
 from usuarios.models import Usuario
+from django.test import override_settings
 
+
+@override_settings(DATABASE_ROUTERS=[])
 class AuthEndpointTest(APITestCase):
 
-    databases = ('default',)
+
 
     def setUp(self):
         self.password = "123456"
