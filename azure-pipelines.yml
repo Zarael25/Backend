@@ -12,21 +12,14 @@ steps:
   persistCredentials: true
   fetchDepth: 0   # Trae todo el historial y todas las ramas
 
-# Instalar dependencias
+# Instalar dependencias y ejecutar pruebas
 - script: |
-    echo "Instalando dependencias..."
+    echo "Instalando dependencias y ejecutando pruebas..."
     python -m venv .venv
-    source .venv/bin/activate
-    pip install --upgrade pip
-    pip install -r requirements.txt
-  displayName: 'Instalar dependencias'
-
-# Ejecutar pruebas
-- script: |
-    echo "Ejecutando pruebas con pytest..."
-    source .venv/bin/activate
-    pytest -v
-  displayName: 'Ejecutar pruebas'
+    .venv/bin/python -m pip install --upgrade pip
+    .venv/bin/pip install -r requirements.txt
+    .venv/bin/pytest -v
+  displayName: 'Instalar dependencias y ejecutar pruebas'
 
 
 # Solo si las pruebas pasan, hacemos push a GitHub
