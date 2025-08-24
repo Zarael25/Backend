@@ -5,12 +5,8 @@ pool:
   vmImage: 'ubuntu-latest'
 
 variables:
-  # Puedes usar variables de pipeline secret para no exponer contraseñas
-  DATABASE_URL: $(DATABASE_URL)
-  DATABASE_URL_ADMIN: $(DATABASE_URL_ADMIN)
-  DATABASE_URL_PUBLICO: $(DATABASE_URL_PUBLICO)
-  DATABASE_URL_LECTURA: $(DATABASE_URL_LECTURA)
-  DJANGO_SETTINGS_MODULE: fichas_backend.settings
+- group: azure_fichas
+
 
 steps:
 - task: UsePythonVersion@0
@@ -36,10 +32,14 @@ steps:
     echo "DATABASE_URL_LECTURA: $DATABASE_URL_LECTURA"
 
     echo "Ejecutando tests con pytest..."
-    # Forzamos Django a usar solo 'default' para los tests
-    export DJANGO_SETTINGS_MODULE=$DJANGO_SETTINGS_MODULE
     pytest --ds=fichas_backend.settings --disable-warnings -v
   displayName: 'Instalar dependencias y ejecutar tests'
+  env:
+    DATABASE_URL: $(DATABASE_URL)
+    DATABASE_URL_ADMIN: $(DATABASE_URL_ADMIN)
+    DATABASE_URL_PUBLICO: $(DATABASE_URL_PUBLICO)
+    DATABASE_URL_LECTURA: $(DATABASE_URL_LECTURA)
+    DJANGO_SETTINGS_MODULE: fichas_backend.settings
 
 
 
