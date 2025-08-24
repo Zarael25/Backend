@@ -22,7 +22,8 @@ steps:
     echo "Exportando variables de entorno..."
     export DATABASE_URL=$DATABASE_URL
     export DATABASE_URL_ADMIN=$DATABASE_URL_ADMIN
-    export DATABASE_URL_ADMIN=$DATABASE_URL_PUBLICO
+    export DATABASE_URL_PUBLICO=$DATABASE_URL_PUBLICO
+    export DATABASE_URL_LECTURA=$DATABASE_URL_LECTURA
     export DJANGO_SETTINGS_MODULE=fichas_backend.settings
 
     echo "Ejecutando pruebas con pytest..."
