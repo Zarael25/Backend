@@ -9,11 +9,19 @@ variables:
 
 
 steps:
+# Hacer checkout primero para que existan todos los archivos
+- checkout: self
+  persistCredentials: true
+  fetchDepth: 0  # Trae todo el historial y ramas
+
+# Usar la versión de Python
 - task: UsePythonVersion@0
   inputs:
     versionSpec: '3.11'
     addToPath: true
 
+  
+# Instalar dependencias y ejecutar tests
 - script: |
     echo "Creando virtualenv..."
     python -m venv .venv
@@ -43,9 +51,6 @@ steps:
 
 
 # Push a GitHub solo si las pruebas pasan
-- checkout: self
-  persistCredentials: true
-  fetchDepth: 0  # Trae todo el historial y ramas
 - script: |
     echo "Configurando GitHub remoto..."
     git remote remove origin-gh || true
