@@ -42,7 +42,6 @@ steps:
     DJANGO_SETTINGS_MODULE: fichas_backend.settings
 
 
-
 # Push a GitHub solo si las pruebas pasan
 - script: |
     echo "Configurando GitHub remoto..."
