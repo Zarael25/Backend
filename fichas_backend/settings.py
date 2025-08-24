@@ -40,6 +40,20 @@ ALLOWED_HOSTS = [
 
 
 
+#LOGGING = {
+#    "version": 1,
+#    "disable_existing_loggers": False,
+#    "handlers": {
+#        "console": {
+#            "class": "logging.StreamHandler",
+#        },
+#    },
+#    "root": {
+#        "handlers": ["console"],
+#        "level": "DEBUG",
+#    },
+#}
+
 LOGGING = {
     "version": 1,
     "disable_existing_loggers": False,
@@ -47,12 +61,46 @@ LOGGING = {
         "console": {
             "class": "logging.StreamHandler",
         },
+        "file": {
+            "class": "logging.FileHandler",
+            "filename": "logs/django_errors.log",
+            "formatter": "verbose",
+        },
     },
-    "root": {
-        "handlers": ["console"],
-        "level": "DEBUG",
+    "formatters": {
+        "verbose": {
+            "format": "[{asctime}] {levelname} {name}: {message}",
+            "style": "{",
+        },
+    },
+    "loggers": {
+        "django": {
+            "handlers": ["console", "file"],
+            "level": "INFO",
+            "propagate": True,
+        },
+        "django.request": {
+            "handlers": ["console", "file"],
+            "level": "WARNING",  # WARNING para capturar 404, ERROR para 500
+            "propagate": False,
+        },
     },
 }
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 

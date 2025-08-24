@@ -1,0 +1,6 @@
+[2025-08-23 23:21:09,531] INFO django.utils.autoreload: Watching for file changes with StatReloader
+[2025-08-23 23:21:25,044] INFO django.server: "GET /admin/ HTTP/1.1" 200 9629
+[2025-08-23 23:21:33,476] WARNING django.request: Not Found: /admin_pochi/
+[2025-08-23 23:21:33,477] WARNING django.server: "GET /admin_pochi/ HTTP/1.1" 404 2464
+[2025-08-23 23:21:47,803] WARNING django.request: Not Found: /gordis/
+[2025-08-23 23:21:47,804] WARNING django.server: "GET /gordis/ HTTP/1.1" 404 2449
