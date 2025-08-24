@@ -203,6 +203,8 @@ DATABASES = {
 
 DATABASE_ROUTERS = ["usuarios.db_router.SafeRoleBasedRouter"]
 
+#Para pruebas unitarias, por problemas de permisos
+#DATABASE_ROUTERS = []
 
 
 

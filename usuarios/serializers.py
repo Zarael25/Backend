@@ -7,7 +7,8 @@ class UsuarioSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Usuario
-        fields = '__all__'
+        exclude = ['groups', 'user_permissions']
+        #fields = '__all__'
 
     def create(self, validated_data):
         password = validated_data.pop('password')

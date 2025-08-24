@@ -14,3 +14,5 @@ tzdata==2025.2
 dj-database-url==2.1.0
 gunicorn==20.1.0
 whitenoise==6.9.0
+pytest==8.4.1
+pytest-django==4.11.1
