@@ -12,6 +12,24 @@ steps:
   persistCredentials: true
   fetchDepth: 0   # Trae todo el historial y todas las ramas
 
+# Instalar dependencias
+- script: |
+    echo "Instalando dependencias..."
+    python -m venv .venv
+    source .venv/bin/activate
+    pip install --upgrade pip
+    pip install -r requirements.txt
+  displayName: 'Instalar dependencias'
+
+# Ejecutar pruebas
+- script: |
+    echo "Ejecutando pruebas con pytest..."
+    source .venv/bin/activate
+    pytest -v
+  displayName: 'Ejecutar pruebas'
+
+
+# Solo si las pruebas pasan, hacemos push a GitHub
 - script: |
     echo "Configurando GitHub remoto..."
     git remote remove origin-gh || true
