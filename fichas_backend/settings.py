@@ -37,6 +37,7 @@ ALLOWED_HOSTS = [
     '10.0.2.2',
     '192.168.1.101',
     'backend-fichasvirtuales.onrender.com',  # ← este es el nuevo dominio
+    "filas-backend.onrender.com",
 ]
 
 

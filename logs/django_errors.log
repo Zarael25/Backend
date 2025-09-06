@@ -11,3 +11,135 @@
 [2025-08-24 12:54:30,966] ERROR django.request: Internal Server Error: /api/registro/
 [2025-08-24 13:47:22,456] ERROR django.request: Internal Server Error: /api/login/
 [2025-08-24 13:59:18,485] ERROR django.request: Internal Server Error: /api/login/
+[2025-09-03 19:43:10,778] INFO django.utils.autoreload: Watching for file changes with StatReloader
+[2025-09-03 19:43:24,864] INFO django.server: "POST /api/login/ HTTP/1.1" 200 549
+[2025-09-03 20:59:01,277] INFO django.utils.autoreload: Watching for file changes with StatReloader
+[2025-09-03 20:59:23,719] INFO django.server: "POST /api/login/ HTTP/1.1" 200 549
+[2025-09-03 21:01:04,457] ERROR django.request: Internal Server Error: /api/tickets/{id_fila}/por-fila/
+Traceback (most recent call last):
+  File "D:\Tecba\Proyecto Fichas\Backend\.venv\Lib\site-packages\django\db\models\fields\__init__.py", line 2053, in get_prep_value
+    return int(value)
+ValueError: invalid literal for int() with base 10: '{id_fila}'
+
+The above exception was the direct cause of the following exception:
+
+Traceback (most recent call last):
+  File "D:\Tecba\Proyecto Fichas\Backend\.venv\Lib\site-packages\django\core\handlers\exception.py", line 55, in inner
+    response = get_response(request)
+  File "D:\Tecba\Proyecto Fichas\Backend\.venv\Lib\site-packages\django\core\handlers\base.py", line 197, in _get_response
+    response = wrapped_callback(request, *callback_args, **callback_kwargs)
+  File "D:\Tecba\Proyecto Fichas\Backend\.venv\Lib\site-packages\django\views\decorators\csrf.py", line 56, in wrapper_view
+    return view_func(*args, **kwargs)
+  File "D:\Tecba\Proyecto Fichas\Backend\.venv\Lib\site-packages\rest_framework\viewsets.py", line 125, in view
+    return self.dispatch(request, *args, **kwargs)
+           ~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "D:\Tecba\Proyecto Fichas\Backend\.venv\Lib\site-packages\rest_framework\views.py", line 515, in dispatch
+    response = self.handle_exception(exc)
+  File "D:\Tecba\Proyecto Fichas\Backend\.venv\Lib\site-packages\rest_framework\views.py", line 475, in handle_exception
+    self.raise_uncaught_exception(exc)
+    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~^^^^^
+  File "D:\Tecba\Proyecto Fichas\Backend\.venv\Lib\site-packages\rest_framework\views.py", line 486, in raise_uncaught_exception
+    raise exc
+  File "D:\Tecba\Proyecto Fichas\Backend\.venv\Lib\site-packages\rest_framework\views.py", line 512, in dispatch
+    response = handler(request, *args, **kwargs)
+  File "D:\Tecba\Proyecto Fichas\Backend\negocios\views.py", line 352, in listar_tickets_por_fila
+    fila = FilaAtencion.objects.get(fila_atencion_id=fila_id)
+  File "D:\Tecba\Proyecto Fichas\Backend\.venv\Lib\site-packages\django\db\models\manager.py", line 87, in manager_method
+    return getattr(self.get_queryset(), name)(*args, **kwargs)
+           ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^
+  File "D:\Tecba\Proyecto Fichas\Backend\.venv\Lib\site-packages\django\db\models\query.py", line 623, in get
+    clone = self._chain() if self.query.combinator else self.filter(*args, **kwargs)
+                                                        ~~~~~~~~~~~^^^^^^^^^^^^^^^^^
+  File "D:\Tecba\Proyecto Fichas\Backend\.venv\Lib\site-packages\django\db\models\query.py", line 1436, in filter
+    return self._filter_or_exclude(False, args, kwargs)
+           ~~~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^
+  File "D:\Tecba\Proyecto Fichas\Backend\.venv\Lib\site-packages\django\db\models\query.py", line 1454, in _filter_or_exclude
+    clone._filter_or_exclude_inplace(negate, args, kwargs)
+    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^
+  File "D:\Tecba\Proyecto Fichas\Backend\.venv\Lib\site-packages\django\db\models\query.py", line 1461, in _filter_or_exclude_inplace
+    self._query.add_q(Q(*args, **kwargs))
+    ~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^
+  File "D:\Tecba\Proyecto Fichas\Backend\.venv\Lib\site-packages\django\db\models\sql\query.py", line 1534, in add_q
+    clause, _ = self._add_q(q_object, self.used_aliases)
+                ~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "D:\Tecba\Proyecto Fichas\Backend\.venv\Lib\site-packages\django\db\models\sql\query.py", line 1565, in _add_q
+    child_clause, needed_inner = self.build_filter(
+                                 ~~~~~~~~~~~~~~~~~^
+        child,
+        ^^^^^^
+    ...<6 lines>...
+        summarize=summarize,
+        ^^^^^^^^^^^^^^^^^^^^
+    )
+    ^
+  File "D:\Tecba\Proyecto Fichas\Backend\.venv\Lib\site-packages\django\db\models\sql\query.py", line 1480, in build_filter
+    condition = self.build_lookup(lookups, col, value)
+  File "D:\Tecba\Proyecto Fichas\Backend\.venv\Lib\site-packages\django\db\models\sql\query.py", line 1307, in build_lookup
+    lookup = lookup_class(lhs, rhs)
+  File "D:\Tecba\Proyecto Fichas\Backend\.venv\Lib\site-packages\django\db\models\lookups.py", line 27, in __init__
+    self.rhs = self.get_prep_lookup()
+               ~~~~~~~~~~~~~~~~~~~~^^
+  File "D:\Tecba\Proyecto Fichas\Backend\.venv\Lib\site-packages\django\db\models\lookups.py", line 341, in get_prep_lookup
+    return super().get_prep_lookup()
+           ~~~~~~~~~~~~~~~~~~~~~~~^^
+  File "D:\Tecba\Proyecto Fichas\Backend\.venv\Lib\site-packages\django\db\models\lookups.py", line 85, in get_prep_lookup
+    return self.lhs.output_field.get_prep_value(self.rhs)
+           ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^
+  File "D:\Tecba\Proyecto Fichas\Backend\.venv\Lib\site-packages\django\db\models\fields\__init__.py", line 2055, in get_prep_value
+    raise e.__class__(
+        "Field '%s' expected a number but got %r." % (self.name, value),
+    ) from e
+ValueError: Field 'fila_atencion_id' expected a number but got '{id_fila}'.
+[2025-09-03 21:01:04,481] ERROR django.server: "GET /api/tickets/%7Bid_fila%7D/por-fila/ HTTP/1.1" 500 167505
+[2025-09-03 21:01:29,225] INFO django.server: "GET /admin/ HTTP/1.1" 302 0
+[2025-09-03 21:01:29,296] INFO django.server: "GET /admin/login/?next=/admin/ HTTP/1.1" 200 4185
+[2025-09-03 21:01:29,343] INFO django.server: "GET /static/admin/css/base.css HTTP/1.1" 304 0
+[2025-09-03 21:01:29,373] INFO django.server: "GET /static/admin/css/dark_mode.css HTTP/1.1" 304 0
+[2025-09-03 21:01:29,382] INFO django.server: "GET /static/admin/js/theme.js HTTP/1.1" 304 0
+[2025-09-03 21:01:29,382] INFO django.server: "GET /static/admin/css/responsive.css HTTP/1.1" 304 0
+[2025-09-03 21:01:29,385] INFO django.server: "GET /static/admin/css/nav_sidebar.css HTTP/1.1" 304 0
+[2025-09-03 21:01:29,388] INFO django.server: "GET /static/admin/js/nav_sidebar.js HTTP/1.1" 304 0
+[2025-09-03 21:01:29,448] INFO django.server: "GET /static/admin/css/login.css HTTP/1.1" 200 958
+[2025-09-03 21:01:29,723] WARNING django.request: Not Found: /favicon.ico
+[2025-09-03 21:01:29,724] WARNING django.server: "GET /favicon.ico HTTP/1.1" 404 2457
+[2025-09-03 21:01:33,298] INFO django.server: "POST /admin/login/?next=/admin/ HTTP/1.1" 200 4347
+[2025-09-03 21:01:47,156] INFO django.server: - Broken pipe from ('127.0.0.1', 51526)
+[2025-09-03 21:01:48,690] INFO django.server: "POST /admin/login/?next=/admin/ HTTP/1.1" 302 0
+[2025-09-03 21:01:50,589] INFO django.server: "GET /admin/ HTTP/1.1" 200 9629
+[2025-09-03 21:01:50,632] INFO django.server: "GET /static/admin/css/dashboard.css HTTP/1.1" 304 0
+[2025-09-03 21:01:50,659] INFO django.server: "GET /static/admin/img/icon-changelink.svg HTTP/1.1" 304 0
+[2025-09-03 21:01:50,664] INFO django.server: "GET /static/admin/img/icon-addlink.svg HTTP/1.1" 304 0
+[2025-09-03 21:02:01,246] INFO django.server: "GET /admin/negocios/filaatencion/ HTTP/1.1" 200 12008
+[2025-09-03 21:02:01,290] INFO django.server: "GET /static/admin/css/changelists.css HTTP/1.1" 304 0
+[2025-09-03 21:02:01,318] INFO django.server: "GET /static/admin/js/admin/RelatedObjectLookups.js HTTP/1.1" 304 0
+[2025-09-03 21:02:01,319] INFO django.server: "GET /static/admin/js/vendor/jquery/jquery.js HTTP/1.1" 304 0
+[2025-09-03 21:02:01,319] INFO django.server: "GET /static/admin/js/core.js HTTP/1.1" 304 0
+[2025-09-03 21:02:01,320] INFO django.server: "GET /static/admin/js/jquery.init.js HTTP/1.1" 304 0
+[2025-09-03 21:02:01,324] INFO django.server: "GET /static/admin/js/prepopulate.js HTTP/1.1" 304 0
+[2025-09-03 21:02:01,326] INFO django.server: "GET /static/admin/js/vendor/xregexp/xregexp.js HTTP/1.1" 304 0
+[2025-09-03 21:02:01,326] INFO django.server: "GET /static/admin/js/actions.js HTTP/1.1" 304 0
+[2025-09-03 21:02:01,333] INFO django.server: "GET /static/admin/js/urlify.js HTTP/1.1" 304 0
+[2025-09-03 21:02:01,346] INFO django.server: "GET /static/admin/js/filters.js HTTP/1.1" 304 0
+[2025-09-03 21:02:02,927] INFO django.server: "GET /admin/jsi18n/ HTTP/1.1" 200 3343
+[2025-09-03 21:02:02,992] INFO django.server: "GET /static/admin/img/tooltag-add.svg HTTP/1.1" 304 0
+[2025-09-03 21:02:09,700] INFO django.server: - Broken pipe from ('127.0.0.1', 52456)
+[2025-09-03 21:02:10,205] INFO django.server: "GET /admin/negocios/filaatencion/1/change/ HTTP/1.1" 200 16921
+[2025-09-03 21:02:10,249] INFO django.server: "GET /static/admin/css/forms.css HTTP/1.1" 200 9047
+[2025-09-03 21:02:10,271] INFO django.server: "GET /static/admin/img/icon-deletelink.svg HTTP/1.1" 304 0
+[2025-09-03 21:02:10,272] INFO django.server: "GET /static/admin/js/admin/DateTimeShortcuts.js HTTP/1.1" 200 19319
+[2025-09-03 21:02:10,272] INFO django.server: "GET /static/admin/img/icon-viewlink.svg HTTP/1.1" 200 581
+[2025-09-03 21:02:10,273] INFO django.server: "GET /static/admin/js/calendar.js HTTP/1.1" 200 8466
+[2025-09-03 21:02:10,276] INFO django.server: "GET /static/admin/css/widgets.css HTTP/1.1" 304 0
+[2025-09-03 21:02:10,282] INFO django.server: "GET /static/admin/js/prepopulate_init.js HTTP/1.1" 304 0
+[2025-09-03 21:02:10,290] INFO django.server: "GET /static/admin/js/change_form.js HTTP/1.1" 200 606
+[2025-09-03 21:02:12,041] INFO django.server: "GET /admin/jsi18n/ HTTP/1.1" 200 3343
+[2025-09-03 21:02:12,199] INFO django.server: "GET /static/admin/img/icon-clock.svg HTTP/1.1" 200 677
+[2025-09-03 21:04:14,921] INFO django.server: "GET /api/tickets/1/por-fila/ HTTP/1.1" 200 1061
+[2025-09-03 21:05:54,045] WARNING django.request: Forbidden: /api/tickets/6/por-fila/
+[2025-09-03 21:05:54,047] WARNING django.server: "GET /api/tickets/6/por-fila/ HTTP/1.1" 403 64
+[2025-09-03 21:06:35,897] INFO django.server: "POST /api/login/ HTTP/1.1" 200 551
+[2025-09-03 21:06:56,475] INFO django.server: "GET /api/tickets/6/por-fila/ HTTP/1.1" 200 204
+[2025-09-03 21:14:36,706] WARNING django.request: Method Not Allowed: /api/usuarios/editar-perfil/
+[2025-09-03 21:14:36,710] WARNING django.server: "GET /api/usuarios/editar-perfil/ HTTP/1.1" 405 40
+[2025-09-03 21:14:48,908] INFO django.server: "PATCH /api/usuarios/editar-perfil/ HTTP/1.1" 200 270
+[2025-09-03 21:15:17,049] INFO django.server: "PATCH /api/usuarios/editar-perfil/ HTTP/1.1" 200 279
