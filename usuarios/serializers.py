@@ -2,15 +2,25 @@ from rest_framework import serializers
 from .models import Usuario, UsuarioTicket, LogUsuario
 from datetime import timedelta
 from django.utils import timezone
+from rest_framework import serializers
+from .models import Usuario, UsuarioTicket, LogUsuario
+from datetime import timedelta
+from django.utils import timezone
+
+# ---------------- Serializer Usuario ----------------
 class UsuarioSerializer(serializers.ModelSerializer):
-    password = serializers.CharField(write_only=True)  # Para que no se exponga al leer
+    # write_only → la contraseña se recibe en requests pero no se devuelve en responses
+    password = serializers.CharField(write_only=True)
 
     class Meta:
         model = Usuario
-        exclude = ['groups', 'user_permissions']
-        #fields = '__all__'
+        exclude = ['groups', 'user_permissions']  # Excluimos campos internos de Django
+        # fields = '__all__'  # (alternativa si se quieren incluir todos los campos)
 
     def create(self, validated_data):
+        """
+        Crea un nuevo usuario con contraseña encriptada.
+        """
         password = validated_data.pop('password')
         usuario = Usuario(**validated_data)
         usuario.set_password(password)  # Encripta la contraseña
@@ -18,6 +28,10 @@ class UsuarioSerializer(serializers.ModelSerializer):
         return usuario
 
     def update(self, instance, validated_data):
+        """
+        Actualiza un usuario.
+        Si se incluye 'password', se encripta antes de guardar.
+        """
         password = validated_data.pop('password', None)
         for attr, value in validated_data.items():
             setattr(instance, attr, value)
@@ -27,14 +41,26 @@ class UsuarioSerializer(serializers.ModelSerializer):
         return instance
 
 
+# ---------------- Serializer UsuarioTicket ----------------
 class UsuarioTicketSerializer(serializers.ModelSerializer):
+    """
+    Serializa la relación Usuario ↔ Ticket (modelo intermedio).
+    """
     class Meta:
         model = UsuarioTicket
         fields = '__all__'
 
 
-
+# ---------------- Serializer Detallado UsuarioTicket ----------------
 class UsuarioTicketDetalleSerializer(serializers.ModelSerializer):
+    """
+    Serializador extendido que incluye:
+    - Info básica del ticket
+    - Info del usuario dueño
+    - Info de la fila y negocio
+    - Cálculo de tiempo restante para cancelar
+    """
+
     # ID del ticket
     ticket_id = serializers.IntegerField(source='ticket.ticket_id', read_only=True)
 
@@ -55,41 +81,44 @@ class UsuarioTicketDetalleSerializer(serializers.ModelSerializer):
     negocio_nombre = serializers.CharField(source='ticket.fila_atencion.negocio.nombre', read_only=True)
     permitir_cancelacion = serializers.BooleanField(source='ticket.fila_atencion.negocio.permite_cancelar', read_only=True)
 
-    # Campo calculado: hasta qué hora se puede cancelar el ticket
+    # Campo calculado: minutos restantes para cancelar
     minutos_restantes_cancelacion = serializers.SerializerMethodField()
 
     class Meta:
         model = UsuarioTicket
         fields = [
-            'ticket_id', 
+            'ticket_id',
             'nombre', 'correo',
             'estado', 'fecha_hora_registro', 'fecha_hora_atencion', 'posicion',
-            'fila_nombre', 'negocio_nombre','permitir_cancelacion',
+            'fila_nombre', 'negocio_nombre', 'permitir_cancelacion',
             'minutos_restantes_cancelacion',
-
         ]
 
-
     def get_minutos_restantes_cancelacion(self, obj):
+        """
+        Calcula cuántos minutos quedan para cancelar el ticket.
+        - Si el negocio no permite cancelar → retorna 0.
+        - Si ya venció el tiempo de cancelación → retorna 0.
+        - Si aún se puede cancelar → retorna los minutos restantes.
+        """
         negocio = obj.ticket.fila_atencion.negocio
-        
+
         if not negocio.permite_cancelar:
-            return 0  # no permite cancelar, 0 minutos restantes
-        
+            return 0
+
         tiempo_limite = negocio.tiempo_limite_cancelacion or 0
         fecha_limite = obj.ticket.fecha_hora_registro + timedelta(minutes=tiempo_limite)
         ahora = timezone.now()
 
         minutos_restantes = (fecha_limite - ahora).total_seconds() / 60
-
-        if minutos_restantes <= 0:
-            return 0
-        
-        return int(minutos_restantes)
-    
+        return int(minutos_restantes) if minutos_restantes > 0 else 0
 
 
+# ---------------- Serializer LogUsuario ----------------
 class LogUsuarioSerializer(serializers.ModelSerializer):
+    """
+    Serializador de logs de usuario (acciones realizadas por cada usuario).
+    """
     class Meta:
         model = LogUsuario
         fields = '__all__'

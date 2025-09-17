@@ -1,27 +1,25 @@
 trigger:
-- develop
+- develop   # Se ejecuta el pipeline cuando hay cambios en la rama develop
 
 pool:
-  vmImage: 'ubuntu-latest'
+  vmImage: 'ubuntu-latest'  # Agente de build: Ubuntu
 
 variables:
-- group: azure_fichas
-
+- group: azure_fichas  # Grupo de variables definidas en Azure DevOps (contiene las credenciales y URLs)
 
 steps:
-# Hacer checkout primero para que existan todos los archivos
+# ---------------- Checkout del repositorio ----------------
 - checkout: self
-  persistCredentials: true
-  fetchDepth: 0  # Trae todo el historial y ramas
+  persistCredentials: true     # Mantiene credenciales configuradas en el agente
+  fetchDepth: 0                # Clona todo el historial de commits y ramas (no solo el último)
 
-# Usar la versión de Python
+# ---------------- Configurar versión de Python ----------------
 - task: UsePythonVersion@0
   inputs:
-    versionSpec: '3.11'
+    versionSpec: '3.11'        # Se usará Python 3.11
     addToPath: true
 
-  
-# Instalar dependencias y ejecutar tests
+# ---------------- Instalar dependencias y ejecutar tests ----------------
 - script: |
     echo "Creando virtualenv..."
     python -m venv .venv
@@ -43,15 +41,13 @@ steps:
     pytest --ds=fichas_backend.settings --disable-warnings -v
   displayName: 'Instalar dependencias y ejecutar tests'
   env:
-    DATABASE_URL: $(DATABASE_URL)
+    DATABASE_URL: $(DATABASE_URL)                # Variables secretas de conexión
     DATABASE_URL_ADMIN: $(DATABASE_URL_ADMIN)
     DATABASE_URL_PUBLICO: $(DATABASE_URL_PUBLICO)
     DATABASE_URL_LECTURA: $(DATABASE_URL_LECTURA)
     DJANGO_SETTINGS_MODULE: fichas_backend.settings
 
-
-# Push a GitHub solo si las pruebas pasan
-
+# ---------------- Push a GitHub si los tests pasan ----------------
 - script: |
     echo "Configurando GitHub remoto..."
     git remote remove origin-gh || true

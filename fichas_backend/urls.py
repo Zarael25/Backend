@@ -18,12 +18,15 @@ from django.contrib import admin
 from django.urls import path, include
 from django.conf import settings
 from django.conf.urls.static import static
-urlpatterns = [
-    path('admin/', admin.site.urls),
-    path('api/', include('fichas_backend.api_urls')),
-    path('apiadmin/', include('fichas_backend.apiadmin_urls')),
 
+
+urlpatterns = [
+    path('admin/', admin.site.urls),                      # Panel de administración de Django
+    path('api/', include('fichas_backend.api_urls')),     # Endpoints generales de la API
+    path('apiadmin/', include('fichas_backend.apiadmin_urls')),  # Endpoints exclusivos para administradores
 ]
 
+# Configuración para servir archivos multimedia en desarrollo (DEBUG=True).
+# En producción normalmente se gestionan con un servidor web (Nginx, S3, etc.)
 if settings.DEBUG:
     urlpatterns += static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)

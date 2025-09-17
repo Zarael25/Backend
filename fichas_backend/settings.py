@@ -31,15 +31,22 @@ SECRET_KEY = 'django-insecure-gaabe4*q8e&hs%rji7(gi)w&)7%+h#%#fg=r6pq%r7lpfzimrp
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
-ALLOWED_HOSTS = [
-    'localhost',
-    '127.0.0.1',
-    '10.0.2.2',
-    '192.168.1.101',
-    'backend-fichasvirtuales.onrender.com',  # ← este es el nuevo dominio
-    "filas-backend.onrender.com",
-]
 
+
+
+
+# Lista de hosts permitidos para que el servidor Django acepte peticiones.
+# Esto evita errores de seguridad (DisallowedHost) cuando la aplicación recibe
+# solicitudes desde diferentes dominios o direcciones IP.
+
+ALLOWED_HOSTS = [
+    'localhost',                         # Desarrollo local
+    '127.0.0.1',                         # Loopback local
+    '10.0.2.2',                          # IP usada por emuladores Android
+    '192.168.1.101',                     # Dirección IP dentro de la red local (cambiar según el entorno)
+    'backend-fichasvirtuales.onrender.com', # Dominio del backend desplegado en Render
+    'filas-backend.onrender.com',        # Alias o dominio adicional del backend en Render
+]
 
 
 
@@ -93,24 +100,6 @@ LOGGING = {
 
 
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 # Application definition
 
 INSTALLED_APPS = [
@@ -142,7 +131,7 @@ MIDDLEWARE = [
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
 
-    'whitenoise.middleware.WhiteNoiseMiddleware',  #Esta línea para el deploy
+    'whitenoise.middleware.WhiteNoiseMiddleware',
 
     
 ]
@@ -170,45 +159,54 @@ WSGI_APPLICATION = 'fichas_backend.wsgi.application'
 # Database
 # https://docs.djangoproject.com/en/5.2/ref/settings/#databases
 
-#DATABASES = {
-#    'default': {
-#        'ENGINE': 'django.db.backends.sqlite3',
-#        'NAME': BASE_DIR / 'db.sqlite3',
-#    }
-#}
+
+
+# Configuración de las bases de datos en Django.
+# Se utilizan variables de entorno para mayor seguridad y flexibilidad,
+# gestionadas mediante dj_database_url y decouple (config).
+
+
 DATABASES = {
-
-
+    # Base de datos principal usada por defecto en la aplicación.
     'default': dj_database_url.config(default=config('DATABASE_URL')),
+
+    # Base de datos destinada operaciones administrativas
+    # (posiblemente con mayores privilegios).
     'admin': dj_database_url.config(default=config('DATABASE_URL_ADMIN')),
+
+    # Base de datos para consultas públicas.
     'publico': dj_database_url.config(default=config('DATABASE_URL_PUBLICO')),
+
+    # Base de datos en modo solo lectura.
     'lectura': dj_database_url.config(default=config('DATABASE_URL_LECTURA')),
 
-
-
-
-
-    #'default': dj_database_url.config(default=config('DATABASE_URL'))
-
-
-
-    #-----------LOCAL------------------
-    #'default': {
-    #    'ENGINE': 'django.db.backends.postgresql',
-    #    'NAME': config('DB_NAME'),
-    #    'USER': config('DB_USER'),
-    #    'PASSWORD': config('DB_PASSWORD'),
-    #    'HOST': config('DB_HOST'),
-    #    'PORT': config('DB_PORT'),
-    #}
-
+    # ----------- CONFIGURACIÓN LOCAL ------------------
+    # Ejemplo de conexión manual a PostgreSQL para desarrollo local.
+    # Se comenta porque en producción se usan las variables de entorno.
+    #
+    # 'default': {
+    #     'ENGINE': 'django.db.backends.postgresql',  # Motor de base de datos
+    #     'NAME': config('DB_NAME'),                  # Nombre de la base de datos
+    #     'USER': config('DB_USER'),                  # Usuario de la base de datos
+    #     'PASSWORD': config('DB_PASSWORD'),          # Contraseña del usuario
+    #     'HOST': config('DB_HOST'),                  # Dirección del servidor
+    #     'PORT': config('DB_PORT'),                  # Puerto de conexión
+    # }
 }
 
 
-DATABASE_ROUTERS = ["usuarios.db_router.SafeRoleBasedRouter"]
 
-#Para pruebas unitarias, por problemas de permisos
-#DATABASE_ROUTERS = []
+
+# Definición de los "Database Routers" en Django.
+# Los routers permiten controlar a qué base de datos van las operaciones
+# (lecturas/escrituras) dependiendo del modelo o la lógica definida.
+
+DATABASE_ROUTERS = ["usuarios.db_router.SafeRoleBasedRouter"]  # Router personalizado para manejar roles y permisos.
+
+# Para pruebas unitarias:
+# Se desactiva el uso de routers porque pueden generar conflictos de permisos.
+# Al dejarlo como lista vacía, todas las operaciones usarán la DB por defecto.
+# DATABASE_ROUTERS = []
 
 
 
@@ -284,24 +282,30 @@ REST_FRAMEWORK = {
 
 
 
+# Configuración de Simple JWT para la autenticación basada en tokens.
+# Define tiempos de vida, rotación de tokens y mapeo de claims en el JWT.
+
 SIMPLE_JWT = {
+    'ACCESS_TOKEN_LIFETIME': timedelta(minutes=20),  # Duración del token de acceso (20 min)
+    'REFRESH_TOKEN_LIFETIME': timedelta(days=7),     # Duración del token de refresco (7 días)
+    'ROTATE_REFRESH_TOKENS': False,                  # Si True: genera un nuevo refresh token al usarlo
+    'BLACKLIST_AFTER_ROTATION': False,               # Si True: el refresh token antiguo se invalida al rotar
+    'UPDATE_LAST_LOGIN': True,                       # Actualiza el campo "last_login" del usuario al autenticarse
 
-    'ACCESS_TOKEN_LIFETIME': timedelta(minutes=20),  # Tiempo de expiración del token de acceso
-    'REFRESH_TOKEN_LIFETIME': timedelta(days=7),  # Tiempo de expiración del token de refresco
-    'ROTATE_REFRESH_TOKENS': False,
-    'BLACKLIST_AFTER_ROTATION': False,
-    'UPDATE_LAST_LOGIN': True,
-
-    'USER_ID_FIELD': 'usuario_id',  # <-- Tu campo PK real
-    'USER_ID_CLAIM': 'user_id',     # El nombre del claim en el JWT
-
-
+    # Personalización de identificadores del usuario en el JWT
+    'USER_ID_FIELD': 'usuario_id',  # Campo real de la PK en tu modelo de usuario
+    'USER_ID_CLAIM': 'user_id',     # Nombre del claim que aparecerá en el JWT
 }
 
 
+# Modelo de usuario personalizado definido en la app "usuarios".
+# Esto reemplaza el modelo de usuario por defecto de Django.
 AUTH_USER_MODEL = 'usuarios.Usuario'
+
+# Configuración de CORS (Cross-Origin Resource Sharing).
+# Con True se permiten peticiones desde cualquier origen.
 CORS_ALLOW_ALL_ORIGINS = True
 
-MEDIA_URL = '/media/'
-MEDIA_ROOT = BASE_DIR / 'media'
-
+# Configuración de archivos multimedia (imágenes, documentos, etc.)
+MEDIA_URL = '/media/'                # URL base para acceder a los archivos
+MEDIA_ROOT = BASE_DIR / 'media'      # Carpeta en el servidor donde se guardan
